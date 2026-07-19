@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>AESTHETE - Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&amp;family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed": "#65f9e6",
+                        "tertiary-fixed": "#e2e2e2",
+                        "on-secondary": "#ffffff",
+                        "secondary-container": "#65f9e6",
+                        "primary-fixed-dim": "#c6c6c6",
+                        "surface-container-low": "#f3f3f4",
+                        "outline-variant": "#cfc4c5",
+                        "on-tertiary-fixed": "#1a1c1c",
+                        "on-primary-container": "#848484",
+                        "on-secondary-fixed-variant": "#005048",
+                        "on-primary-fixed": "#1b1b1b",
+                        "on-primary-fixed-variant": "#474747",
+                        "inverse-surface": "#2f3131",
+                        "surface-container-high": "#e8e8e8",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface": "#f9f9f9",
+                        "on-surface": "#1a1c1c",
+                        "on-error": "#ffffff",
+                        "inverse-on-surface": "#f0f1f1",
+                        "surface-container": "#eeeeee",
+                        "on-background": "#1a1c1c",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#1b1b1b",
+                        "surface-variant": "#e2e2e2",
+                        "outline": "#7e7576",
+                        "on-surface-variant": "#4c4546",
+                        "on-secondary-fixed": "#00201c",
+                        "secondary-fixed-dim": "#41dcca",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed-dim": "#c6c6c7",
+                        "tertiary-container": "#1a1c1c",
+                        "secondary": "#006a60",
+                        "on-tertiary-fixed-variant": "#454747",
+                        "inverse-primary": "#c6c6c6",
+                        "on-tertiary-container": "#838484",
+                        "background": "#f9f9f9",
+                        "surface-container-highest": "#e2e2e2",
+                        "surface-dim": "#dadada",
+                        "primary": "#000000",
+                        "tertiary": "#000000",
+                        "error-container": "#ffdad6",
+                        "surface-bright": "#f9f9f9",
+                        "on-secondary-container": "#007166",
+                        "surface-tint": "#5e5e5e",
+                        "primary-fixed": "#e2e2e2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px",
+                        "2xl": "1.5rem"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "md": "24px",
+                        "sm": "12px",
+                        "gutter": "24px",
+                        "container-max": "1440px",
+                        "xl": "80px",
+                        "base": "8px",
+                        "lg": "48px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Bricolage Grotesque"],
+                        "headline-lg-mobile": ["Bricolage Grotesque"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "headline-md": ["Bricolage Grotesque"],
+                        "body-md": ["Hanken Grotesk"],
+                        "headline-lg": ["Bricolage Grotesque"],
+                        "body-lg": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["72px", { "lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "800" }],
+                        "headline-lg-mobile": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "letterSpacing": "0em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "letterSpacing": "0.01em", "fontWeight": "400" }],
+                        "headline-lg": ["40px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "letterSpacing": "0.02em", "fontWeight": "400" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
+        .pt-safe { padding-top: env(safe-area-inset-top, 20px); }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md antialiased selection:bg-secondary selection:text-on-secondary min-h-screen relative pb-24">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface/80 backdrop-blur-md pt-safe">
+<div class="flex justify-between items-center px-gutter w-full h-16">
+<button aria-label="Menu" class="w-10 h-10 flex items-center justify-center text-primary dark:text-primary-fixed hover:opacity-70 transition-opacity duration-300 active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined" data-icon="menu" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<h1 class="font-display-lg text-headline-md tracking-tighter text-primary dark:text-primary-fixed uppercase tracking-widest text-center m-0">AESTHETE</h1>
+<button aria-label="Shopping Bag" class="w-10 h-10 flex items-center justify-center text-primary dark:text-primary-fixed hover:opacity-70 transition-opacity duration-300 active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined" data-icon="shopping_bag" style="font-variation-settings: 'FILL' 0;">shopping_bag</span>
+</button>
+</div>
+<!-- Subtle tonal separation instead of solid border per guidelines -->
+<div class="w-full h-px bg-gradient-to-r from-transparent via-outline-variant/30 to-transparent"></div>
+</header>
+<main class="pt-[calc(4rem+env(safe-area-inset-top))]">
+<!-- Hero Banner Section -->
+<section class="relative w-full h-[70vh] min-h-[500px] mb-xl overflow-hidden">
+<!-- Using requested image placeholder -->
+<div class="absolute inset-0 w-full h-full bg-surface-dim">
+<img alt="High-end minimalist fashion editorial" class="w-full h-full object-cover object-center scale-105 transform origin-center transition-transform duration-[10s] ease-out" id="hero-bg" src="https://lh3.googleusercontent.com/aida/AP1WRLusx5R8TJKIsMhESUj7OhinfGX93ry3yruxolC9hCJXMWuChiMBvNzWfEOxWpxVqNXnPcQWX0Jr3sgQbfG45yT4-zBA-rdn6_SYCJOV_oJ45hvY20IaYFtLPsM7OxC1CLu_DQOwe83wNuXrzwL3Z-6JqQp_C_VpGRzuZIVPZt7ENYlGoK-kv9-QbPl6EnDy4ZJJUAkYRlMTQTQEdoRpXxdwgr1ipAskavZzLUmY5Rwcq3FSnllSMIHnezmP"/>
+</div>
+<!-- Gradient Overlay for legibility -->
+<div class="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/20 to-transparent"></div>
+<div class="absolute inset-0 flex flex-col justify-end p-md pb-xl">
+<div class="max-w-container-max mx-auto w-full">
+<span class="inline-block bg-surface/20 backdrop-blur-md text-on-primary font-label-sm text-label-sm uppercase tracking-widest py-1 px-3 rounded-full mb-sm border border-surface/30">New Season</span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-primary mb-md max-w-[80%] leading-tight">THE TACTILE<br/>COLLECTION</h2>
+<button class="bg-primary text-on-primary font-label-sm text-label-sm uppercase tracking-widest px-8 py-4 hover:bg-secondary hover:text-on-secondary transition-colors duration-300 w-full md:w-auto inline-flex items-center justify-center gap-sm active:scale-95 transform">
+                        Shop Collection
+                        <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Categories Feed - Asymmetric Layout -->
+<section class="px-gutter max-w-container-max mx-auto mb-xl space-y-xl">
+<div class="flex items-center justify-between mb-lg">
+<h3 class="font-headline-lg-mobile text-headline-md tracking-tighter uppercase text-primary">Explore Categories</h3>
+<span class="w-12 h-px bg-primary/20 block"></span>
+</div>
+<!-- Outerwear Card (Large, full width) -->
+<article class="group relative rounded-2xl overflow-hidden bg-surface-container-low aspect-[4/5] md:aspect-[16/9] cursor-pointer block transform hover:scale-[1.01] transition-transform duration-500 shadow-sm border border-outline-variant/20">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="A striking minimalist editorial fashion shot focused entirely on a structured, oversized technical outerwear trench coat. The coat is a deep charcoal grey with matte black hardware, draped dramatically over an invisible form against a stark, high-key pristine white studio background. Sharp, architectural lighting creates strong, defining shadows that emphasize the texture and cut of the luxury garment. The mood is clinical, avant-garde, and premium." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA3GaBgN3TeNkeZ9vybUralYphXxUySisLBmc5txD9ob_c_ipPlF7ZCDAMYstQswJOy-zC__evUtZLh184IMPyBjxa3DzUiIGVtgwt7WnMt43jxI_Ov6GjG6cCb2CsfsxGI9NcxXLhGU2OivBQr6qYDIUm85bH1Uu9gsiJe7X84hRddcULrAt5TvAxfCniCIq1YQeT9zo5FR34j8aWLFLyZ-rC92Beb56JzkSOLSvH4fG7Iu2-hBA1tIQCmjLhvQ4OX_BM6rIlH9_DA')"></div>
+<div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500"></div>
+<!-- Hover Border Reveal -->
+<div class="absolute inset-0 border-2 border-transparent group-hover:border-secondary transition-colors duration-500 rounded-2xl pointer-events-none"></div>
+<div class="absolute bottom-0 left-0 w-full p-md bg-gradient-to-t from-surface/90 to-transparent backdrop-blur-[2px]">
+<div class="flex justify-between items-end">
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-widest mb-1 block">Curated</span>
+<h4 class="font-headline-lg-mobile text-headline-md text-primary m-0">Outerwear</h4>
+</div>
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary group-hover:bg-secondary transition-colors duration-300">
+<span class="material-symbols-outlined text-[20px]">north_east</span>
+</div>
+</div>
+</div>
+</article>
+<!-- 2-Column Grid for smaller categories -->
+<div class="grid grid-cols-2 gap-sm md:gap-md">
+<!-- Trousers -->
+<article class="group relative rounded-2xl overflow-hidden bg-surface-container-low aspect-[3/4] cursor-pointer border border-outline-variant/20 shadow-sm">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="Close up detailed shot of premium luxury men's tailored trousers in a muted olive tone. The focus is on the intricate stitching, subtle pleats, and the high-quality woven fabric texture. Soft, diffused lighting highlights the drape of the material. Set against a clean, light grey abstract architectural background. The aesthetic is quiet luxury, precise, and sophisticated." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDj2gyzQPzibf8L1JGMe73UqvFB-wmBkR0xpRmQSdIrKGA4flCDq2i_oFYKURZ0VunHIzqN9QevZR6lrZNWmeg00f2CWJrfrdqPEzVZDeFJvG-O7sHD_MHzUxM6KQG2FlDJ80XwUkpapv87tq1P2Mq0MkH5Em98_4y04hZAamQqYJ9kyUc17kR_nIxoB3B0aEjowB-bQrAOkdND5tC-14hsvwK7eqDFcesosc4kmlC04AaAh6X4gCJwpkLr4Ihlg6tyVLsqYaMiVyy9')"></div>
+<div class="absolute inset-0 border-2 border-transparent group-hover:border-secondary transition-colors duration-500 rounded-2xl pointer-events-none z-10"></div>
+<div class="absolute bottom-0 left-0 w-full p-sm bg-surface/80 backdrop-blur-md">
+<h4 class="font-headline-md text-[18px] text-primary m-0 uppercase tracking-tight">Trousers</h4>
+<span class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-widest mt-1 block">24 Styles</span>
+</div>
+</article>
+<!-- Footwear -->
+<article class="group relative rounded-2xl overflow-hidden bg-surface-container-low aspect-[3/4] cursor-pointer border border-outline-variant/20 shadow-sm mt-md">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="A single avant-garde designer sneaker floating elegantly in mid-air against a pure white infinite backdrop. The shoe features a mix of matte leather and translucent technical meshes in off-white and soft grey tones, with a bold architectural sole. Crisp, highly directional lighting casts a sharp drop shadow on an invisible plane below, emphasizing the structural design and luxury modern streetwear aesthetic." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBmKSMhiOJTY50oF7B-ObB6L-YJGLemSFeXKfrkGK381sQMmWo1eVsoXbwZ5vw9pB1x9sw7ZNZDlIES1678PqzO5VzbMoHRBkwmESbP1UqnWIlcT-dGEDO3LhHh-D2G0IzB7efgXnY06aasdwYGvaeBCPUyI7rAMQbgef_AqZFmIzan_AgZsL2f2b8CAT4qqk16roHK99vWqgVsyF_j4oUQm5T0W5e8tgXnVfA3Q2xYuHR0gbW55lEZOOC2vsMt2-xGlHGzk4iH3JNt')"></div>
+<div class="absolute inset-0 border-2 border-transparent group-hover:border-secondary transition-colors duration-500 rounded-2xl pointer-events-none z-10"></div>
+<div class="absolute bottom-0 left-0 w-full p-sm bg-surface/80 backdrop-blur-md">
+<h4 class="font-headline-md text-[18px] text-primary m-0 uppercase tracking-tight">Footwear</h4>
+<span class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-widest mt-1 block">New Arrivals</span>
+</div>
+</article>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 md:hidden bg-surface/90 dark:bg-surface/90 backdrop-blur-xl shadow-[0_-8px_30px_rgba(0,0,0,0.04)] border-t border-outline-variant/20">
+<div class="flex justify-around items-center h-20 pb-safe px-8 w-full max-w-md mx-auto">
+<!-- Home (Active) -->
+<button aria-current="page" aria-label="home" class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed scale-110 transition-all duration-300 group">
+<span class="material-symbols-outlined mb-1 group-active:scale-90 transition-transform" data-icon="home" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="sr-only font-label-sm text-label-sm uppercase tracking-widest">Home</span>
+</button>
+<!-- Search -->
+<button aria-label="search" class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-primary dark:hover:text-primary-fixed transition-colors duration-300 group">
+<span class="material-symbols-outlined mb-1 group-active:scale-90 transition-transform" data-icon="search" style="font-variation-settings: 'FILL' 0;">search</span>
+<span class="sr-only font-label-sm text-label-sm uppercase tracking-widest">Search</span>
+</button>
+<!-- Favorite -->
+<button aria-label="favorite" class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-primary dark:hover:text-primary-fixed transition-colors duration-300 group">
+<span class="material-symbols-outlined mb-1 group-active:scale-90 transition-transform" data-icon="favorite" style="font-variation-settings: 'FILL' 0;">favorite</span>
+<span class="sr-only font-label-sm text-label-sm uppercase tracking-widest">Favorite</span>
+</button>
+<!-- Person -->
+<button aria-label="person" class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-primary dark:hover:text-primary-fixed transition-colors duration-300 group">
+<span class="material-symbols-outlined mb-1 group-active:scale-90 transition-transform" data-icon="person" style="font-variation-settings: 'FILL' 0;">person</span>
+<span class="sr-only font-label-sm text-label-sm uppercase tracking-widest">Profile</span>
+</button>
+</div>
+</nav>
+<script>
+        // Subtle parallax effect on hero image for tactile feel
+        window.addEventListener('scroll', () => {
+            const scrollPos = window.scrollY;
+            const heroBg = document.getElementById('hero-bg');
+            if (heroBg && scrollPos < window.innerHeight) {
+                heroBg.style.transform = `translateY(${scrollPos * 0.2}px) scale(1.05)`;
+            }
+        });
+    </script>
+</body></html>

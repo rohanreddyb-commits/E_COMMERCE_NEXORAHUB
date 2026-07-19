@@ -20,9 +20,14 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const res = await api.get("/admin/dashboard");
-        if (res.success && res.stats) {
-          setStats(res.stats);
+        const res: any = await api.get("/analytics/metrics");
+        if (res.success && res.data) {
+          setStats({
+            totalProducts: res.data.total_products,
+            totalOrders: res.data.total_orders,
+            totalCustomers: res.data.total_customers,
+            totalRevenue: res.data.total_revenue
+          });
         } else {
           setError("Failed to fetch dashboard statistics.");
         }

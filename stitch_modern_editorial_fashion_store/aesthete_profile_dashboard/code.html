@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AESTHETE | Customer Profile Dashboard</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&amp;family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#f9f9f9",
+                        "on-surface-variant": "#4c4546",
+                        "on-secondary-fixed": "#00201c",
+                        "primary": "#000000",
+                        "inverse-surface": "#2f3131",
+                        "primary-fixed-dim": "#c6c6c6",
+                        "inverse-on-surface": "#f0f1f1",
+                        "surface-container-high": "#e8e8e8",
+                        "on-primary-fixed": "#1b1b1b",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "tertiary": "#000000",
+                        "secondary-fixed": "#65f9e6",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "surface-container-highest": "#e2e2e2",
+                        "surface-container-low": "#f3f3f4",
+                        "tertiary-container": "#1a1c1c",
+                        "on-tertiary-fixed-variant": "#454747",
+                        "surface-tint": "#5e5e5e",
+                        "on-tertiary-container": "#838484",
+                        "on-secondary-container": "#007166",
+                        "on-surface": "#1a1c1c",
+                        "secondary-fixed-dim": "#41dcca",
+                        "on-tertiary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#474747",
+                        "on-primary-container": "#848484",
+                        "outline": "#7e7576",
+                        "inverse-primary": "#c6c6c6",
+                        "secondary": "#006a60",
+                        "primary-container": "#1b1b1b",
+                        "on-secondary-fixed-variant": "#005048",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed": "#e2e2e2",
+                        "on-tertiary-fixed": "#1a1c1c",
+                        "outline-variant": "#cfc4c5",
+                        "tertiary-fixed-dim": "#c6c6c7",
+                        "surface-dim": "#dadada",
+                        "on-background": "#1a1c1c",
+                        "surface-variant": "#e2e2e2",
+                        "surface": "#f9f9f9",
+                        "surface-container": "#eeeeee",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed": "#e2e2e2",
+                        "secondary-container": "#65f9e6",
+                        "background": "#f9f9f9",
+                        "neo-chrome": "#37D6C4"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "xs": "4px",
+                        "sm": "12px",
+                        "base": "8px",
+                        "md": "24px",
+                        "lg": "48px",
+                        "xl": "80px",
+                        "container-max": "1440px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Hanken Grotesk"],
+                        "headline-lg": ["Bricolage Grotesque"],
+                        "body-md": ["Hanken Grotesk"],
+                        "display-lg": ["Bricolage Grotesque"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "headline-md": ["Bricolage Grotesque"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "1.6", "letterSpacing": "0.02em", "fontWeight": "400"}],
+                        "headline-lg": ["40px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "letterSpacing": "0.01em", "fontWeight": "400"}],
+                        "display-lg": ["72px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                        "label-sm": ["12px", {"lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "letterSpacing": "0em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .active-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .glass-header {
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md selection:bg-secondary-container">
+<!-- TopNavBar (Shell) -->
+<nav class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30">
+<div class="flex justify-between items-center w-full px-gutter py-sm max-w-container-max mx-auto">
+<div class="font-display-lg text-headline-md tracking-tighter text-primary">AESTHETE</div>
+<div class="hidden md:flex gap-lg">
+<a class="font-body-md text-body-md tracking-widest text-on-surface-variant hover:text-secondary transition-colors duration-300" href="#">COLLECTIONS</a>
+<a class="font-body-md text-body-md tracking-widest text-on-surface-variant hover:text-secondary transition-colors duration-300" href="#">EDITORIAL</a>
+<a class="font-body-md text-body-md tracking-widest text-on-surface-variant hover:text-secondary transition-colors duration-300" href="#">NEW ARRIVALS</a>
+<a class="font-body-md text-body-md tracking-widest text-on-surface-variant hover:text-secondary transition-colors duration-300" href="#">ABOUT</a>
+</div>
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined cursor-pointer hover:text-secondary transition-all">shopping_bag</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-secondary transition-all">person</span>
+</div>
+</div>
+</nav>
+<!-- Sidebar & Canvas Container -->
+<div class="flex min-h-screen pt-[64px]">
+<!-- SideNavBar (Shared Component) -->
+<aside class="hidden lg:flex h-[calc(100vh-64px)] w-80 fixed left-0 top-[64px] bg-surface-container-lowest border-r border-outline-variant/20 shadow-sm flex-col p-md gap-sm">
+<div class="mb-lg">
+<h2 class="font-headline-md text-headline-md text-primary">Welcome back</h2>
+<p class="font-body-md text-body-md text-on-surface-variant opacity-70">AESTHETE Insider</p>
+</div>
+<nav class="flex flex-col gap-xs flex-1">
+<!-- ACTIVE: Profile -->
+<a class="bg-secondary-container text-on-secondary-container rounded-lg p-3 flex items-center gap-sm transition-all duration-200" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-body-md font-medium">Profile</span>
+</a>
+<a class="text-on-surface-variant p-3 flex items-center gap-sm hover:bg-surface-container-low transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">package_2</span>
+<span class="font-body-md">Orders</span>
+</a>
+<a class="text-on-surface-variant p-3 flex items-center gap-sm hover:bg-surface-container-low transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">favorite</span>
+<span class="font-body-md">Wishlist</span>
+</a>
+<a class="text-on-surface-variant p-3 flex items-center gap-sm hover:bg-surface-container-low transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md">Settings</span>
+</a>
+</nav>
+<div class="mt-auto flex flex-col gap-xs">
+<button class="w-full bg-primary text-on-primary py-3 px-6 text-label-sm font-semibold tracking-widest uppercase mb-md hover:opacity-90 transition-all">VIEW CART</button>
+<a class="text-on-surface-variant p-3 flex items-center gap-sm hover:bg-surface-container-low transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-body-md">Support</span>
+</a>
+<a class="text-on-surface-variant p-3 flex items-center gap-sm hover:bg-surface-container-low transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-body-md">Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 lg:ml-80 w-full px-gutter lg:px-lg py-lg max-w-container-max">
+<!-- Header Section -->
+<header class="mb-xl">
+<h1 class="font-display-lg text-display-lg uppercase tracking-tight mb-md">MY ACCOUNT</h1>
+<!-- Customer Identity Block -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-md border-b border-outline-variant/30 pb-lg">
+<div class="space-y-xs">
+<h2 class="font-headline-lg text-headline-lg text-primary">Julian Thorne</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">j.thorne@aesthetic-studio.com</p>
+</div>
+<div class="inline-flex items-center bg-[#37D6C4]/10 border border-[#37D6C4]/30 px-sm py-xs rounded-full gap-sm self-start md:self-auto">
+<div class="active-dot bg-[#37D6C4]"></div>
+<span class="font-label-sm text-on-secondary-container tracking-widest uppercase">PLATINUM VIP</span>
+</div>
+</div>
+</header>
+<!-- Grid Layout for Account Details -->
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-lg items-start">
+<!-- Order History Module (2 Columns on large) -->
+<section class="xl:col-span-2 bg-surface-container-lowest rounded-xl p-md lg:p-lg border border-outline-variant/20 shadow-[0px_12px_40px_rgba(0,0,0,0.03)]">
+<div class="flex justify-between items-center mb-xl">
+<h3 class="font-headline-md text-headline-md">Recent Orders</h3>
+<a class="font-label-sm text-primary underline underline-offset-4 hover:text-secondary transition-all" href="#">VIEW ALL</a>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full border-collapse">
+<thead>
+<tr class="border-b border-outline-variant/30">
+<th class="text-left py-md font-label-sm text-on-surface-variant uppercase tracking-widest">Order #</th>
+<th class="text-left py-md font-label-sm text-on-surface-variant uppercase tracking-widest">Status</th>
+<th class="text-left py-md font-label-sm text-on-surface-variant uppercase tracking-widest">Date</th>
+<th class="text-right py-md font-label-sm text-on-surface-variant uppercase tracking-widest">Total</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<!-- Order Row 1 -->
+<tr class="group hover:bg-surface-container-low/50 transition-colors cursor-pointer">
+<td class="py-lg font-body-md font-semibold text-primary">#AE-92831</td>
+<td class="py-lg">
+<div class="flex items-center gap-xs">
+<div class="w-1.5 h-1.5 rounded-full bg-[#37D6C4]"></div>
+<span class="font-body-md text-on-surface-variant">Processing</span>
+</div>
+</td>
+<td class="py-lg font-body-md text-on-surface-variant">OCT 12, 2024</td>
+<td class="py-lg text-right font-body-md font-semibold text-primary">$1,840.00</td>
+</tr>
+<!-- Order Row 2 -->
+<tr class="group hover:bg-surface-container-low/50 transition-colors cursor-pointer">
+<td class="py-lg font-body-md font-semibold text-primary">#AE-92754</td>
+<td class="py-lg">
+<div class="flex items-center gap-xs">
+<div class="w-1.5 h-1.5 rounded-full bg-primary"></div>
+<span class="font-body-md text-on-surface-variant">Shipped</span>
+</div>
+</td>
+<td class="py-lg font-body-md text-on-surface-variant">SEP 28, 2024</td>
+<td class="py-lg text-right font-body-md font-semibold text-primary">$4,210.00</td>
+</tr>
+<!-- Order Row 3 -->
+<tr class="group hover:bg-surface-container-low/50 transition-colors cursor-pointer">
+<td class="py-lg font-body-md font-semibold text-primary">#AE-92612</td>
+<td class="py-lg">
+<div class="flex items-center gap-xs opacity-50">
+<div class="w-1.5 h-1.5 rounded-full bg-outline"></div>
+<span class="font-body-md text-on-surface-variant">Delivered</span>
+</div>
+</td>
+<td class="py-lg font-body-md text-on-surface-variant">SEP 15, 2024</td>
+<td class="py-lg text-right font-body-md font-semibold text-primary">$985.00</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Profile Insights Sidebar Component -->
+<div class="flex flex-col gap-lg">
+<!-- Membership Status Card -->
+<div class="bg-primary text-on-primary rounded-xl p-md lg:p-lg shadow-xl relative overflow-hidden">
+<!-- Abstract Shader Overlay -->
+<div class="absolute inset-0 opacity-20 pointer-events-none">
+<div class="absolute top-0 right-0 w-64 h-64 bg-secondary-container blur-[80px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
+</div>
+<div class="relative z-10">
+<p class="font-label-sm uppercase tracking-[0.2em] mb-sm opacity-60">Membership Progress</p>
+<h3 class="font-headline-md text-headline-md mb-lg">LIFETIME STATUS</h3>
+<div class="space-y-xs mb-lg">
+<div class="flex justify-between text-label-sm">
+<span>TITANIUM TIER</span>
+<span>$1,450 TO GO</span>
+</div>
+<div class="w-full bg-on-primary/20 h-1 rounded-full overflow-hidden">
+<div class="bg-secondary-container h-full w-[70%]"></div>
+</div>
+</div>
+<button class="w-full bg-surface text-primary py-3 text-label-sm font-bold tracking-widest uppercase hover:bg-secondary-container transition-colors">BENEFITS GUIDE</button>
+</div>
+</div>
+<!-- Editorial Content Highlight -->
+<div class="bg-surface-container rounded-xl overflow-hidden group">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="A cinematic, high-fashion photograph of an architecturally designed beige linen suit being worn in a minimalist concrete space with dramatic lighting. The focus is on the intricate textile textures and the asymmetric cuts of the garment, reflecting a quiet luxury aesthetic. The scene is illuminated by soft, natural light coming through a large window, creating deep, sophisticated shadows." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTceVgLjjL_h_4qfUPmAJgHFL0SOB1Dr6kYTYOdpjpR40BptM-eA0OnDh8xtnSiouMDEFNLH5WTyFzis9xQfSgaQxhaoH6Vu8J0z0qYgLe7ise0ApSMhqU6P37MkcXw278_pANxMuYhGsRjCmUMlxdl8UyxH7v2xaX3ef7unKhO4lqSWt7Yax4tojKHASmaj4Hr59ZoQ21u2xxyWQd3p24sTgROI4BNDKfjAVD5Oc5crDFRR6jPq3PkHp07G7zXn2Zf88V6oj8yGMK"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+<div class="absolute bottom-md left-md">
+<span class="bg-secondary text-white px-2 py-0.5 rounded text-label-sm uppercase mb-xs inline-block">New Arrival</span>
+<p class="text-white font-headline-md text-headline-md leading-tight">THE ARCHITECT COLLECTION</p>
+</div>
+</div>
+<div class="p-md">
+<p class="font-body-md text-on-surface-variant mb-md">Explore our latest drop featuring modular silhouettes and sustainable wool blends.</p>
+<a class="font-label-sm text-primary flex items-center gap-xs hover:gap-sm transition-all" href="#">SHOP NOW <span class="material-symbols-outlined text-[16px]">arrow_forward</span></a>
+</div>
+</div>
+</div>
+</div>
+<!-- Dashboard Footer -->
+<footer class="w-full mt-xl border-t border-outline-variant/50 px-gutter py-lg flex flex-col md:flex-row justify-between items-center gap-md">
+<div class="font-display-lg text-headline-md text-primary">AESTHETE</div>
+<div class="flex flex-wrap justify-center gap-lg">
+<a class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant hover:text-secondary underline transition-all" href="#">PRIVACY POLICY</a>
+<a class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant hover:text-secondary underline transition-all" href="#">TERMS OF SERVICE</a>
+<a class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant hover:text-secondary underline transition-all" href="#">SHIPPING &amp; RETURNS</a>
+<a class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant hover:text-secondary underline transition-all" href="#">CONTACT</a>
+</div>
+<p class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant opacity-60">© 2024 AESTHETE. ALL RIGHTS RESERVED.</p>
+</footer>
+</main>
+</div>
+<!-- Micro-interaction Script -->
+<script>
+        // Simple dashboard interaction logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const orderRows = document.querySelectorAll('tbody tr');
+            orderRows.forEach(row => {
+                row.addEventListener('click', () => {
+                    // Trigger a visual feedback or link
+                    row.classList.add('bg-secondary-container/20');
+                    setTimeout(() => row.classList.remove('bg-secondary-container/20'), 300);
+                });
+            });
+        });
+    </script>
+</body></html>

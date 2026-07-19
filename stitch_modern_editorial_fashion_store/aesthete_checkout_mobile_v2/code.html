@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AESTHETE - Checkout</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&amp;family=Hanken+Grotesk:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed": "#65f9e6",
+                        "tertiary-fixed": "#e2e2e2",
+                        "on-secondary": "#ffffff",
+                        "secondary-container": "#65f9e6",
+                        "primary-fixed-dim": "#c6c6c6",
+                        "surface-container-low": "#f3f3f4",
+                        "outline-variant": "#cfc4c5",
+                        "on-tertiary-fixed": "#1a1c1c",
+                        "on-primary-container": "#848484",
+                        "on-secondary-fixed-variant": "#005048",
+                        "on-primary-fixed": "#1b1b1b",
+                        "on-primary-fixed-variant": "#474747",
+                        "inverse-surface": "#2f3131",
+                        "surface-container-high": "#e8e8e8",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface": "#f9f9f9",
+                        "on-surface": "#1a1c1c",
+                        "on-error": "#ffffff",
+                        "inverse-on-surface": "#f0f1f1",
+                        "surface-container": "#eeeeee",
+                        "on-background": "#1a1c1c",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#1b1b1b",
+                        "surface-variant": "#e2e2e2",
+                        "outline": "#7e7576",
+                        "on-surface-variant": "#4c4546",
+                        "on-secondary-fixed": "#00201c",
+                        "secondary-fixed-dim": "#41dcca",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed-dim": "#c6c6c7",
+                        "tertiary-container": "#1a1c1c",
+                        "secondary": "#006a60",
+                        "on-tertiary-fixed-variant": "#454747",
+                        "inverse-primary": "#c6c6c6",
+                        "on-tertiary-container": "#838484",
+                        "background": "#f9f9f9",
+                        "surface-container-highest": "#e2e2e2",
+                        "surface-dim": "#dadada",
+                        "primary": "#000000",
+                        "tertiary": "#000000",
+                        "error-container": "#ffdad6",
+                        "surface-bright": "#f9f9f9",
+                        "on-secondary-container": "#007166",
+                        "surface-tint": "#5e5e5e",
+                        "primary-fixed": "#e2e2e2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "md": "24px",
+                        "sm": "12px",
+                        "gutter": "24px",
+                        "container-max": "1440px",
+                        "xl": "80px",
+                        "base": "8px",
+                        "lg": "48px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Bricolage Grotesque"],
+                        "headline-lg-mobile": ["Bricolage Grotesque"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "headline-md": ["Bricolage Grotesque"],
+                        "body-md": ["Hanken Grotesk"],
+                        "headline-lg": ["Bricolage Grotesque"],
+                        "body-lg": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["72px", { "lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "800" }],
+                        "headline-lg-mobile": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "letterSpacing": "0em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "letterSpacing": "0.01em", "fontWeight": "400" }],
+                        "headline-lg": ["40px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "letterSpacing": "0.02em", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: theme('colors.background'); color: theme('colors.on-background'); }
+        /* Minimalist Input Styles */
+        input[type="text"], input[type="email"], input[type="tel"] {
+            border: none;
+            border-bottom: 1px solid theme('colors.surface-variant');
+            background: transparent;
+            border-radius: 0;
+            padding: 12px 0;
+            font-family: theme('fontFamily.body-md');
+            font-size: theme('fontSize.body-md[0]');
+            transition: all 0.3s ease;
+        }
+        input[type="text"]:focus, input[type="email"]:focus, input[type="tel"]:focus {
+            box-shadow: none;
+            border-bottom: 2px solid theme('colors.primary');
+            outline: none;
+        }
+        /* Sticky FAB adjustment */
+        .pb-safe-fab { padding-bottom: calc(100px + env(safe-area-inset-bottom, 20px)); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased min-h-screen pb-safe-fab font-body-md text-body-md md:bg-surface-container-lowest">
+<!-- TopAppBar (Suppressed Navigation logic applies - Transactional Screen) 
+         Using a simplified header for checkout flow -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-md border-b border-surface-variant/50 h-16 flex items-center justify-center px-gutter">
+<button aria-label="Go Back" class="absolute left-gutter text-primary">
+<span class="material-symbols-outlined text-headline-md font-headline-md">arrow_back</span>
+</button>
+<span class="font-display-lg text-headline-md uppercase tracking-widest text-primary">AESTHETE</span>
+</header>
+<main class="pt-24 px-gutter max-w-[600px] mx-auto flex flex-col gap-xl">
+<!-- Express Checkout Zone -->
+<section class="flex flex-col gap-md">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary tracking-tighter">EXPRESS CHECKOUT</h2>
+<div class="grid grid-cols-2 gap-sm">
+<button class="w-full bg-[#5A31F4] text-white py-sm rounded-DEFAULT flex items-center justify-center hover:opacity-90 transition-opacity">
+<span class="font-label-sm text-label-sm tracking-widest">SHOP PAY</span>
+</button>
+<button class="w-full bg-[#000000] text-white py-sm rounded-DEFAULT flex items-center justify-center hover:opacity-90 transition-opacity">
+<span class="font-label-sm text-label-sm tracking-widest">APPLE PAY</span>
+</button>
+</div>
+<div class="flex items-center gap-md my-sm">
+<div class="flex-1 h-px bg-surface-variant"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">OR CONTINUE BELOW</span>
+<div class="flex-1 h-px bg-surface-variant"></div>
+</div>
+</section>
+<!-- Shipping Info Zone -->
+<section class="flex flex-col gap-lg">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary tracking-tighter">SHIPPING</h2>
+<form class="flex flex-col gap-md">
+<input class="w-full placeholder:text-on-surface-variant/50 text-primary" placeholder="Email Address" required="" type="email"/>
+<div class="grid grid-cols-2 gap-md">
+<input class="w-full placeholder:text-on-surface-variant/50 text-primary" placeholder="First Name" required="" type="text"/>
+<input class="w-full placeholder:text-on-surface-variant/50 text-primary" placeholder="Last Name" required="" type="text"/>
+</div>
+<input class="w-full placeholder:text-on-surface-variant/50 text-primary" placeholder="Address" required="" type="text"/>
+<input class="w-full placeholder:text-on-surface-variant/50 text-primary" placeholder="Apartment, suite, etc. (optional)" type="text"/>
+<div class="grid grid-cols-2 gap-md">
+<input class="w-full placeholder:text-on-surface-variant/50 text-primary" placeholder="City" required="" type="text"/>
+<input class="w-full placeholder:text-on-surface-variant/50 text-primary" placeholder="Postal Code" required="" type="text"/>
+</div>
+<input class="w-full placeholder:text-on-surface-variant/50 text-primary" placeholder="Phone" required="" type="tel"/>
+</form>
+</section>
+<!-- Order Summary Zone -->
+<section class="flex flex-col gap-md bg-surface p-md rounded-xl border border-surface-variant">
+<h2 class="font-headline-lg-mobile text-headline-md text-primary tracking-tighter">ORDER SUMMARY</h2>
+<div class="flex gap-md items-start py-sm">
+<div class="w-24 h-32 bg-surface-container-low rounded-DEFAULT overflow-hidden flex-shrink-0 relative">
+<img class="w-full h-full object-cover" data-alt="A meticulously styled product shot of a minimalist, high-end black architectural coat. The coat is presented on a stark white background with soft, diffused lighting creating subtle shadows. The aesthetic is extremely clean, modern, and aligned with luxury streetwear. Sharp details and premium textures are visible." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBINYAzeGnbfU944tjhLZHZtFpKgi6v7Lr7d_WeoXaFiGGtUAMxKjFv2gP4asBKvhoH_Xs-hdQFWYITY_WOY3YOIlnBgz9lpRwHh-dabpP09KEl5y3hPWPOSeyP3Tf12I2-shStY-QuI8sqmOFeyp0LbAUOzoVrXH0BDA7hD6NQmcB0HlPtKUtxWm3PCmgVRGdl7hg5tR_FcO4kNPZPUWi29OiW0ATilU7LH6Fg0Ch0UBs4zfUS086nQy0ndIo3dcGYYnxEuvf0OYCf"/>
+</div>
+<div class="flex flex-col justify-between h-full w-full">
+<div>
+<h3 class="font-headline-md text-body-lg text-primary leading-tight">ARCHITECTURAL COAT</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">NOIR / M</p>
+</div>
+<div class="text-right w-full mt-4">
+<span class="font-body-md text-body-md text-primary">$895.00</span>
+</div>
+</div>
+</div>
+<div class="h-px bg-surface-variant w-full my-sm"></div>
+<div class="flex flex-col gap-xs">
+<div class="flex justify-between font-body-md text-body-md text-on-surface-variant">
+<span>Subtotal</span>
+<span>$895.00</span>
+</div>
+<div class="flex justify-between font-body-md text-body-md text-on-surface-variant">
+<span>Shipping</span>
+<span>Calculated at next step</span>
+</div>
+</div>
+<div class="h-px bg-surface-variant w-full my-sm"></div>
+<div class="flex justify-between items-end">
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-widest">TOTAL</span>
+<span class="font-headline-md text-headline-md text-primary">$895.00</span>
+</div>
+</section>
+</main>
+<!-- Sticky Payment Action -->
+<div class="fixed bottom-0 left-0 w-full bg-surface/90 backdrop-blur-xl border-t border-surface-variant z-50 p-md pb-[calc(24px+env(safe-area-inset-bottom,0px))] shadow-[0_-8px_30px_rgba(0,0,0,0.04)]">
+<button class="w-full bg-secondary-container text-on-secondary-fixed-variant font-label-sm text-label-sm uppercase tracking-widest py-4 px-8 rounded-full hover:bg-secondary-fixed transition-colors flex justify-between items-center group shadow-lg shadow-secondary-container/20">
+<span>CONTINUE TO PAYMENT</span>
+<span class="material-symbols-outlined text-headline-md font-headline-md group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+</body></html>

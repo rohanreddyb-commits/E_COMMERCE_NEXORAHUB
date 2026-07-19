@@ -1,0 +1,60 @@
+=========================================================
+      E-COMMERCE NEXORAHUB - BACKEND ARCHITECTURE
+=========================================================
+
+1. OVERVIEW
+-----------------
+The backend is built as a RESTful API using Node.js, Express, and TypeScript. It follows a clean, layered architectural pattern designed for scalability and maintainability. It is currently designed to interface with a Microsoft SQL Server (MSSQL) database.
+
+2. TECH STACK & LIBRARIES
+-----------------
+- Runtime: Node.js
+- Framework: Express.js
+- Language: TypeScript
+- Database: Microsoft SQL Server (MSSQL) driver `mssql`
+- Security: Helmet (HTTP headers), CORS, Express Rate Limit, bcrypt (password hashing), jsonwebtoken (JWT auth)
+- Validation: Yup (Schema-based request validation)
+- File Uploads: Multer (for serving product images locally via `/uploads` static route)
+- Logging: Winston (Centralized request and error logging)
+- Performance: Compression (GZIP response bodies)
+
+3. ARCHITECTURAL PATTERN (LAYERED ARCHITECTURE)
+-----------------
+The backend strictly adheres to a separation of concerns using the Controller-Service-Repository pattern:
+- **Routes Layer** (`/routes`): Maps HTTP endpoints to specific Controller functions.
+- **Controller Layer** (`/controllers`): Handles HTTP requests, extracts parameters/body, and delegates business logic to the Service layer. Returns HTTP responses.
+- **Service Layer** (`/services`): Contains the core business logic. Coordinates between different repositories and handles complex workflows (e.g., verifying a coupon before applying it to a cart).
+- **Repository Layer** (`/repositories`): Handles all direct database interactions. Encapsulates SQL queries and abstracts the database implementation away from the business logic.
+- **Validator Layer** (`/validators`): Yup schemas to validate incoming request bodies and parameters before they hit the controller logic.
+
+4. CORE DOMAINS (MODULES)
+-----------------
+The application is split into several distinct domains, each with its own route, controller, service, and repository:
+- **Auth**: User registration, login, JWT token generation, and password hashing.
+- **Products**: Product catalog management, fetching products, and handling static product image uploads via Multer.
+- **Addresses**: Managing user shipping and billing addresses.
+- **Cart**: Shopping cart management (add, remove, update quantities).
+- **Coupons**: Discount code management, validation against cart totals.
+- **Orders**: Order processing, checkout logic, and order history.
+- **Admin**: Administrative endpoints for managing users, overall store settings, and metrics.
+
+5. SECURITY & MIDDLEWARE
+-----------------
+- **Authentication**: JWT-based authentication via an `auth` middleware (`middleware/auth.ts`) that verifies the token in the `Authorization` header and attaches the user payload to the request object.
+- **Global Error Handling**: A centralized error handler (`middleware/errorHandler.ts`) intercepts exceptions and normalizes error responses to the client, preventing stack traces from leaking. Uses a custom `CustomError` utility for predictable API error structures.
+- **Rate Limiting**: Protects against brute-force and DDoS attacks by limiting requests per IP window.
+- **Validation**: A `validate` middleware (`middleware/validate.ts`) intercepts requests and tests them against the respective Yup schemas in `/validators`.
+
+6. DATABASE MANAGEMENT
+-----------------
+- **Connection**: Managed via `database/db.ts` which establishes a connection pool on server start.
+- **Initialization**: `database/initDb.ts` handles automatic schema migrations and look-up seeding on boot.
+- **Raw SQL**: SQL files for schema and sample data exist in the `database/` root folder (`schema.sql`, `seed.sql`, `sample_data.sql`).
+
+7. STARTUP WORKFLOW (`app.ts`)
+-----------------
+1. Security and Performance middlewares are applied (Helmet, CORS, Compression, JSON parsers).
+2. Rate Limiting and Winston Request Logging are attached.
+3. API Routes are mounted onto `/api/...`.
+4. Global Error handler is registered as the last middleware.
+5. The `startServer` function initializes the DB connection pool, runs the migrations, and finally listens on the configured port.

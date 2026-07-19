@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>AESTHETE - Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600&amp;family=Bricolage+Grotesque:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#e2e2e2",
+                        "surface-bright": "#f9f9f9",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#41dcca",
+                        "on-secondary-fixed-variant": "#005048",
+                        "on-secondary-fixed": "#00201c",
+                        "secondary": "#006a60",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#c6c6c7",
+                        "on-surface": "#1a1c1c",
+                        "error-container": "#ffdad6",
+                        "outline-variant": "#cfc4c5",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#e2e2e2",
+                        "primary": "#000000",
+                        "on-tertiary-fixed": "#1a1c1c",
+                        "on-primary-fixed-variant": "#474747",
+                        "on-tertiary-fixed-variant": "#454747",
+                        "on-background": "#1a1c1c",
+                        "surface-tint": "#5e5e5e",
+                        "on-primary-container": "#848484",
+                        "on-tertiary-container": "#838484",
+                        "primary-fixed-dim": "#c6c6c6",
+                        "on-secondary-container": "#007166",
+                        "primary-fixed": "#e2e2e2",
+                        "surface-container-highest": "#e2e2e2",
+                        "on-primary": "#ffffff",
+                        "surface-container": "#eeeeee",
+                        "tertiary-container": "#1a1c1c",
+                        "inverse-primary": "#c6c6c6",
+                        "surface-container-high": "#e8e8e8",
+                        "secondary-container": "#65f9e6",
+                        "surface": "#f9f9f9",
+                        "on-secondary": "#ffffff",
+                        "background": "#f9f9f9",
+                        "on-surface-variant": "#4c4546",
+                        "inverse-surface": "#2f3131",
+                        "on-primary-fixed": "#1b1b1b",
+                        "primary-container": "#1b1b1b",
+                        "outline": "#7e7576",
+                        "inverse-on-surface": "#f0f1f1",
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#f3f3f4",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#000000",
+                        "surface-dim": "#dadada",
+                        "secondary-fixed": "#65f9e6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "lg": "48px",
+                        "gutter": "24px",
+                        "base": "8px",
+                        "sm": "12px",
+                        "xl": "80px",
+                        "md": "24px",
+                        "xs": "4px",
+                        "container-max": "1440px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Hanken Grotesk"],
+                        "display-lg": ["Bricolage Grotesque"],
+                        "headline-md": ["Bricolage Grotesque"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "headline-lg-mobile": ["Bricolage Grotesque"],
+                        "headline-lg": ["Bricolage Grotesque"],
+                        "body-md": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "600" }],
+                        "display-lg": ["72px", { "lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "800" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "letterSpacing": "0em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "letterSpacing": "0.02em", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["40px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "letterSpacing": "0.01em", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body-md min-h-screen relative pb-24">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 transition-all duration-300" id="top-bar">
+<div class="flex justify-between items-center px-gutter h-16 w-full">
+<button class="hover:opacity-70 transition-opacity flex items-center justify-center p-2 -ml-2 text-primary dark:text-on-surface active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="menu" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<div class="font-headline-md text-headline-md tracking-tighter text-primary dark:text-on-surface uppercase font-bold text-center absolute left-1/2 -translate-x-1/2">
+                AESTHETE
+            </div>
+<div class="flex items-center gap-2">
+<button class="hover:opacity-70 transition-opacity flex items-center justify-center p-2 text-primary dark:text-on-surface active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="search" style="font-variation-settings: 'FILL' 0;">search</span>
+</button>
+<button class="hover:opacity-70 transition-opacity flex items-center justify-center p-2 -mr-2 text-primary dark:text-on-surface active:scale-95 duration-200 relative">
+<span class="material-symbols-outlined" data-icon="shopping_bag" style="font-variation-settings: 'FILL' 0;">shopping_bag</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-secondary rounded-full"></span>
+</button>
+</div>
+</div>
+</header>
+<main class="pt-16">
+<!-- Hero Section -->
+<section class="relative w-full h-[751px] md:h-[618px]">
+<div class="absolute inset-0 bg-surface-dim">
+<img class="w-full h-full object-cover object-center" data-alt="A striking vertical portrait of a fashion model in a stark, minimalist concrete interior. The model wears high-end avant-garde streetwear featuring structural layers in muted monochromatic tones. Soft, diffused natural light enters from a large unseen window, highlighting the textural quality of the fabrics against the brutalist background. The scene exudes quiet luxury and contemporary architectural minimalism, with pristine styling and expansive negative space framing the subject." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwNSQE9fN3jC5H2usB8oLSnsdrr6m_cEmL7q-i3zS7G_WubeUL08QPwDZFkqbvYMGsiCWHKuk8Bc5Ktu-eZTZY3XYVdGc2e6RztQm0qFukF7YVeXd0OzaxPyOmdRD3HYoVUQh8PobWgjWbKLrBZwqH71kJzUHDh7G16JV-C7uWG47MlyOFJyw41S8n6CoxmHKYTXQYH0EQANM2MSjey-shxbOVoyhywN95IAzuCIPdShn4J1npz8rt3rVY3FwR4NH3dXOWbBqlmVow"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
+</div>
+<div class="absolute bottom-0 left-0 w-full p-gutter pb-xl flex flex-col items-start z-10">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-tertiary mb-sm max-w-[80%] leading-tight">Elevated Essentials</h1>
+<p class="font-body-lg text-body-lg text-on-tertiary/90 mb-lg max-w-[90%]">The definitive collection for the modern minimalists.</p>
+<button class="bg-primary text-on-primary font-label-sm text-label-sm uppercase tracking-widest px-8 py-4 w-full md:w-auto hover:bg-surface-variant hover:text-primary transition-colors duration-300">
+                    Shop Collection
+                </button>
+</div>
+</section>
+<!-- Spacer -->
+<div class="h-xl"></div>
+<!-- Categories Cascading Feed -->
+<section class="px-gutter mb-xl">
+<div class="flex items-end justify-between mb-lg">
+<h2 class="font-headline-md text-headline-md text-primary">Curated Edits</h2>
+</div>
+<div class="grid grid-cols-2 gap-md">
+<!-- Asymmetrical Card 1 (Taller) -->
+<a class="col-span-1 row-span-2 group relative block h-[320px] rounded-xl overflow-hidden bg-surface-variant" href="#">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A close-up shot of a luxurious, structured wool coat draped over a minimalist wire chair. The setting is a bright, white, high-key studio environment. The texture of the dark charcoal wool contrasts sharply with the smooth, clean lines of the setting. The lighting is soft but directional, creating subtle shadows that emphasize depth and quality, embodying a modern minimalist aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9nDZe_VU0vu5pMFnkOccaHimQeGmKXbDPXMWN4FJi2Rkf6FopVv_Lim_yA_5pOAvUqku54kkP-_xnnyWEoWBaw8lcR8BPMtSpIrd86XP7ugBQf0yf85duN1twwx9EU9A-vbw0OEzZnKaArRw0CPZEpHshOWS5EKLFBy1ekxx7ksiL6uNC6LY0AuKwsG-klpz6nqCznJba3ZC_Nk_4_5NcD3G8I-hZSjeatSwjPtwMGKTwcZfcRC5PNU2KAzUXBPV-JV7BC2onWlnE"/>
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
+<div class="absolute bottom-md left-md">
+<h3 class="font-headline-md text-headline-md text-on-tertiary">Outerwear</h3>
+<span class="font-label-sm text-label-sm text-on-tertiary uppercase mt-xs block opacity-0 transform translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">Explore</span>
+</div>
+</a>
+<!-- Asymmetrical Card 2 -->
+<a class="col-span-1 row-span-1 group relative block h-[150px] rounded-xl overflow-hidden bg-surface-variant" href="#">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A stylized detail shot of wide-leg tailored trousers worn by a model in motion, walking across a polished concrete floor. The trousers are a pale stone color, moving fluidly. The crop focuses heavily on the cut and drape of the fabric near the ankle and footwear. High-contrast, cool-toned lighting enhances the urban, high-fashion streetwear mood." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAC4zkz0VRAUk0E2AiPnGjlyQyA33WihkpqkzILMwvsF6YNZG-QIEa0Za4asAcPiSzsgQ_eKd9ZeSBP_M7JyAMYaTat3GCB4M_gMuQNmnN50mD3f7oJgWRWm650HE5w36BxKdHHpkV3ATOQYCOSBhoLobMnDph-jWQ4IE2uGRjH-1RHM8ax2D1b1AWIyE0QMIIEcb1l5rriXaOnGtj8fmwsvarKY_9MAVeYOe2LeaTSxIlShsrfWhTXAobvtxKfgfI5m9Ed8yw6tkV5"/>
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
+<div class="absolute bottom-sm left-sm">
+<h3 class="font-label-sm text-label-sm text-on-tertiary uppercase tracking-wider">Trousers</h3>
+</div>
+</a>
+<!-- Asymmetrical Card 3 -->
+<a class="col-span-1 row-span-1 group relative block h-[150px] rounded-xl overflow-hidden bg-surface-variant mt-[-8px]" href="#">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A macro studio photograph of an avant-garde chunky sole sneaker resting on a pristine white architectural plinth. The shoe features matte black panels with subtle geometric details. The background is completely white, creating a high-fashion, editorial aesthetic with sharp focus and absolute clarity, emphasizing product as sculpture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFvyRZcDuBr-tQ__4CaYQMLEBivr3WEUaLZ0_Joxywm7YD8hIe25Pyh2Wd2Bt1ADtozpHKigj3YCEUdq71CKxO5CWGy5vZhbhCfayWD0cWZTEOpkkdYh3MTJ9yyATnHn7vuWaIXzw_ISO5fm_s9q8POIuvFLrp4kLZGwwb9ih5zP4JbMacymm5woHknEL1RQI3T24Cd9r1zAegW18xVbjZkmZnI1VWns0-38yrYmNbTMeuu59zRUTG3r7ad5uUI3H7Gp9tSZoVHjQl"/>
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
+<div class="absolute bottom-sm left-sm">
+<h3 class="font-label-sm text-label-sm text-on-tertiary uppercase tracking-wider">Footwear</h3>
+</div>
+</a>
+</div>
+<!-- Full Width Category -->
+<a class="group relative block h-[200px] rounded-xl overflow-hidden bg-surface-variant mt-md" href="#">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A stark, minimalist composition featuring sleek, silver architectural jewelry laid across a dark slate stone surface. The lighting is moody and dramatic, picking up the metallic reflections. The composition utilizes significant negative space, aligning perfectly with a quiet luxury, high-end digital aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqh65mFUd01rxJvsbiTRYU_CLOX47AWdw08mT25ukCjkFtNX34aBTY60oauiSzJmDsTvIzgFxCsTNib1JJ0_uU8StLjNQ4Zk_xlVt30KyVmGpaIzS2S6z3u3x0e2FTZGmPrjNm0dSw5yql7MRVB0AO7gEu6qjQx5XUazC54J1JieEYjrS4oku7OeIHuzwvCxbLIgzbK4FB2cWU7QroMSRA1tGymLLoJGDLrY7sZNW0OZhPCiEqGzsLFJZtrwCrdoH-5xxsAea9Z40j"/>
+<div class="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors"></div>
+<div class="absolute bottom-md left-md right-md flex justify-between items-end">
+<h3 class="font-headline-md text-headline-md text-on-tertiary">Accessories</h3>
+<span class="material-symbols-outlined text-on-tertiary" data-icon="arrow_forward">arrow_forward</span>
+</div>
+</a>
+</section>
+<!-- New Arrivals Horizontal Scroll -->
+<section class="mb-xl overflow-hidden">
+<div class="px-gutter mb-md flex justify-between items-end">
+<h2 class="font-headline-md text-headline-md text-primary">New Arrivals</h2>
+<a class="font-label-sm text-label-sm text-primary uppercase border-b border-primary pb-xs" href="#">View All</a>
+</div>
+<div class="flex overflow-x-auto hide-scrollbar pl-gutter pr-gutter pb-md gap-md snap-x snap-mandatory">
+<!-- Product Card 1 -->
+<div class="min-w-[240px] md:min-w-[280px] snap-start flex flex-col group cursor-pointer">
+<div class="relative h-[320px] bg-surface-bright rounded-xl overflow-hidden mb-sm border border-outline-variant/20 group-hover:border-secondary transition-colors duration-300">
+<img class="w-full h-full object-cover mix-blend-multiply" data-alt="A full-length studio shot of a model wearing an oversized, heavy-weight structured black t-shirt. The model is standing against a pure white background in a relaxed but intentional pose. The lighting is flat and editorial, capturing the drape and premium weight of the cotton fabric, typical of modern high-end streetwear." src="https://lh3.googleusercontent.com/aida-public/AB6AXuASzB-sw5mr7pAadQwLMyzI2u895WSnp5PqwQSpYTj4-FLgERb_6Cf7_RZYnTGCF2tAHwLlbrSrHoEcGGdLSF90IUE9yTaI6lB3uq-WcH0aKofPdoe1dvM1IrMjnEhrgqkAU_AmqqJnlzjn6brN5uofCHqvAVo3hFSYwVkOPDkKuD3aT32AcmydRdV5Q57ldUlSHe1CFbOxraxOlwY_ZB5MZ_HXAcci_rlUDUt-N5q8kF-7fVlDIsbGqvYJ7ikEfWP9G5ZY16gyFFvW"/>
+<button class="absolute top-sm right-sm w-8 h-8 flex items-center justify-center rounded-full bg-surface/80 backdrop-blur text-primary hover:text-secondary transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="favorite_border">favorite_border</span>
+</button>
+<!-- Quick Add Overlay on Hover (Desktop) / Visible on Mobile -->
+<div class="absolute bottom-sm left-sm right-sm flex gap-xs opacity-90 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<button class="flex-1 bg-primary text-on-primary font-label-sm text-[10px] py-2 rounded uppercase text-center hover:bg-secondary">S</button>
+<button class="flex-1 bg-primary text-on-primary font-label-sm text-[10px] py-2 rounded uppercase text-center hover:bg-secondary">M</button>
+<button class="flex-1 bg-surface text-primary font-label-sm text-[10px] py-2 rounded uppercase text-center opacity-50 cursor-not-allowed">L</button>
+</div>
+</div>
+<div class="flex flex-col">
+<div class="flex justify-between items-start mb-xs">
+<h4 class="font-body-md text-body-md text-primary font-bold">Heavyweight Box Tee</h4>
+<span class="font-body-md text-body-md text-primary">$85</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Onyx Black</p>
+</div>
+</div>
+<!-- Product Card 2 -->
+<div class="min-w-[240px] md:min-w-[280px] snap-start flex flex-col group cursor-pointer">
+<div class="relative h-[320px] bg-surface-bright rounded-xl overflow-hidden mb-sm border border-outline-variant/20 group-hover:border-secondary transition-colors duration-300">
+<img class="w-full h-full object-cover mix-blend-multiply" data-alt="A sharply detailed image of an architectural technical jacket in a pale sage green color. The jacket features waterproof zippers, distinct paneled construction, and a matte finish, displayed on an invisible mannequin against a completely neutral light grey background. The lighting emphasizes the technical features and minimalist silhouette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtJrmjYY37NO-sDGsTZAErBWMniraqnoOxPRRxP0CsfoY_iUscS-XXws5zCCkcbBPWlxS1Je3nijiq8SwQmXh0mMzErpWfQD7ZzrgGMZ4yJOF4cyFDMBDEY0nnyFyWzTwkLNwIsZv0dzQ7BXpLZ11a36LCZ9MDmkluXscY5ZKiW3hKrmae_CtJxH2YDe2WtplW1GTBXAaFDlbQM10SGVK55XXS6r9zVfkiqtDgA3xKiHgEzqp4wCcGdKktSg0k1XBhLrOZBN0Dpz9S"/>
+<button class="absolute top-sm right-sm w-8 h-8 flex items-center justify-center rounded-full bg-surface/80 backdrop-blur text-primary hover:text-secondary transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="favorite_border">favorite_border</span>
+</button>
+<div class="absolute bottom-sm left-sm right-sm flex gap-xs opacity-90 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<button class="flex-1 bg-primary text-on-primary font-label-sm text-[10px] py-2 rounded uppercase text-center hover:bg-secondary">M</button>
+<button class="flex-1 bg-primary text-on-primary font-label-sm text-[10px] py-2 rounded uppercase text-center hover:bg-secondary">L</button>
+<button class="flex-1 bg-primary text-on-primary font-label-sm text-[10px] py-2 rounded uppercase text-center hover:bg-secondary">XL</button>
+</div>
+</div>
+<div class="flex flex-col">
+<div class="flex justify-between items-start mb-xs">
+<h4 class="font-body-md text-body-md text-primary font-bold">Tech-Shell Anorak</h4>
+<span class="font-body-md text-body-md text-primary">$320</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Sage</p>
+</div>
+</div>
+<!-- Product Card 3 -->
+<div class="min-w-[240px] md:min-w-[280px] snap-start flex flex-col group cursor-pointer">
+<div class="relative h-[320px] bg-surface-bright rounded-xl overflow-hidden mb-sm border border-outline-variant/20 group-hover:border-secondary transition-colors duration-300">
+<img class="w-full h-full object-cover mix-blend-multiply" data-alt="A focused shot on the lower half of a model wearing wide, structural cargo pants in a dark charcoal grey. The pants have subtle, flush pockets and clean lines. The model wears pristine white low-top sneakers. The background is a sparse, modern concrete studio setting, bathed in soft, diffused lighting that highlights the quiet luxury aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBq49jSs7p4y1eH-028zMUkIV-fnEPx5X_kjgVVaax-eodnUnb4usUiF_1kYPI6vn1fkzwSbaWK1Sa4cArYMcrLl_vf55mNluicAUe4S6K41EOXOXpiOYYjDdVEVnXe71pGBZ7DZWe-8Ikn9IBgST0RmYm6cqJQrHIjGOVS_BVqRTTCazINdtvUHPg9XhE4spsL2Jg5e-Yq-TyXv074NEa1aD-UBqeGN3AEj6zPUvda4iPCiduKbjIBQqBbuTQAftGhAr4mldyIT_OY"/>
+<button class="absolute top-sm right-sm w-8 h-8 flex items-center justify-center rounded-full bg-surface/80 backdrop-blur text-primary hover:text-secondary transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="favorite_border">favorite_border</span>
+</button>
+<div class="absolute bottom-sm left-sm right-sm flex gap-xs opacity-90 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<button class="flex-1 bg-primary text-on-primary font-label-sm text-[10px] py-2 rounded uppercase text-center hover:bg-secondary">30</button>
+<button class="flex-1 bg-primary text-on-primary font-label-sm text-[10px] py-2 rounded uppercase text-center hover:bg-secondary">32</button>
+<button class="flex-1 bg-primary text-on-primary font-label-sm text-[10px] py-2 rounded uppercase text-center hover:bg-secondary">34</button>
+</div>
+</div>
+<div class="flex flex-col">
+<div class="flex justify-between items-start mb-xs">
+<h4 class="font-body-md text-body-md text-primary font-bold">Structured Cargo</h4>
+<span class="font-body-md text-body-md text-primary">$210</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Charcoal</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Spacer to ensure bottom nav doesn't overlap content too much -->
+<div class="h-lg"></div>
+</main>
+<!-- BottomNavBar -->
+<nav class="md:hidden bg-surface/90 dark:bg-surface/90 backdrop-blur-lg fixed bottom-0 w-full z-50 rounded-t-xl shadow-[0_-4px_20px_rgba(0,0,0,0.03)] flex justify-around items-center py-sm px-md pb-safe">
+<!-- Shop (Active) -->
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim font-bold active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="storefront" style="font-variation-settings: 'FILL' 1;">storefront</span>
+<span class="font-label-sm text-label-sm text-secondary dark:text-secondary-fixed-dim">Shop</span>
+</a>
+<!-- Search -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-secondary transition-colors active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="search" style="font-variation-settings: 'FILL' 0;">search</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant">Search</span>
+</a>
+<!-- Wishlist -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-secondary transition-colors active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="favorite" style="font-variation-settings: 'FILL' 0;">favorite</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant">Wishlist</span>
+</a>
+<!-- Profile -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-secondary transition-colors active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="person" style="font-variation-settings: 'FILL' 0;">person</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant">Profile</span>
+</a>
+</nav>
+<script>
+        // Simple scroll handler for top bar styling
+        const topBar = document.getElementById('top-bar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 10) {
+                topBar.classList.add('shadow-sm');
+                topBar.classList.replace('bg-surface/80', 'bg-surface/95');
+            } else {
+                topBar.classList.remove('shadow-sm');
+                topBar.classList.replace('bg-surface/95', 'bg-surface/80');
+            }
+        });
+    </script>
+</body></html>

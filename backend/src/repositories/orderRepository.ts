@@ -4,7 +4,8 @@ import { executeQuery } from "../database/db";
 export interface OrderDB {
   order_id: number;
   user_id: number;
-  address_id: number;
+  shipping_address_id: number | null;
+  billing_address_id: number | null;
   subtotal: number;
   discount_amount: number;
   total_amount: number;
@@ -38,7 +39,7 @@ export class OrderRepository {
     transaction: sql.Transaction
   ): Promise<number> {
     const query = `
-      INSERT INTO Orders (user_id, address_id, subtotal, discount_amount, total_amount, coupon_code, order_status, payment_status, created_at, updated_at)
+      INSERT INTO Orders (user_id, shipping_address_id, subtotal, discount_amount, total_amount, coupon_code, order_status, payment_status, created_at, updated_at)
       OUTPUT INSERTED.order_id
       VALUES (@userId, @addressId, @subtotal, @discountAmount, @totalAmount, @couponCode, @orderStatus, @paymentStatus, GETDATE(), GETDATE());
     `;
@@ -88,7 +89,7 @@ export class OrderRepository {
     transaction: sql.Transaction
   ): Promise<void> {
     const query = `
-      INSERT INTO Payments (order_id, transaction_id, amount, payment_method, payment_status, created_at)
+      INSERT INTO Transactions (order_id, gateway_transaction_id, amount, payment_method, status, created_at)
       VALUES (@orderId, @transactionId, @amount, @paymentMethod, @paymentStatus, GETDATE());
     `;
 
@@ -103,7 +104,7 @@ export class OrderRepository {
 
   static async getOrdersByUser(userId: number): Promise<OrderDB[]> {
     const query = `
-      SELECT order_id, user_id, address_id, subtotal, discount_amount, total_amount, coupon_code, order_status, payment_status, created_at, updated_at
+      SELECT order_id, user_id, shipping_address_id, billing_address_id, subtotal, discount_amount, total_amount, coupon_code, order_status, payment_status, created_at, updated_at
       FROM Orders
       WHERE user_id = @userId
       ORDER BY order_id DESC;
@@ -118,7 +119,7 @@ export class OrderRepository {
 
   static async getOrderById(orderId: number): Promise<OrderDB | null> {
     const query = `
-      SELECT order_id, user_id, address_id, subtotal, discount_amount, total_amount, coupon_code, order_status, payment_status, created_at, updated_at
+      SELECT order_id, user_id, shipping_address_id, billing_address_id, subtotal, discount_amount, total_amount, coupon_code, order_status, payment_status, created_at, updated_at
       FROM Orders
       WHERE order_id = @orderId;
     `;
@@ -151,8 +152,8 @@ export class OrderRepository {
 
   static async getPaymentInfo(orderId: number): Promise<any | null> {
     const query = `
-      SELECT payment_id, order_id, transaction_id, amount, payment_method, payment_status, created_at
-      FROM Payments
+      SELECT transaction_id, order_id, gateway_transaction_id, amount, payment_method, status as payment_status, created_at
+      FROM Transactions
       WHERE order_id = @orderId;
     `;
 
@@ -168,7 +169,7 @@ export class OrderRepository {
 
   static async getAllOrders(): Promise<(OrderDB & { customer_name: string })[]> {
     const query = `
-      SELECT o.order_id, o.user_id, o.address_id, o.subtotal, o.discount_amount, o.total_amount, 
+      SELECT o.order_id, o.user_id, o.shipping_address_id, o.billing_address_id, o.subtotal, o.discount_amount, o.total_amount, 
              o.coupon_code, o.order_status, o.payment_status, o.created_at, o.updated_at,
              u.name as customer_name
       FROM Orders o

@@ -154,7 +154,9 @@ export class OrderService {
 
     const items = await OrderRepository.getOrderItems(orderId);
     const payment = await OrderRepository.getPaymentInfo(orderId);
-    const address = await AddressService.getAddressById(order.address_id, order.user_id);
+    const address = order.shipping_address_id
+      ? await AddressService.getAddressById(order.shipping_address_id, order.user_id)
+      : null;
 
     return {
       ...order,

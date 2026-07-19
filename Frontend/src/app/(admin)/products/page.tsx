@@ -1,8 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { api } from "@/utils/api";
+import { useRouter } from "next/navigation";
+import { api, getImageUrl } from "@/utils/api";
 import { Modal } from "@/components/ui/modal";
 import { Pagination } from "@/components/common/Pagination";
+
 
 interface Product {
   product_id: number;
@@ -15,16 +17,28 @@ interface Product {
   category_name?: string;
   status: string;
   primary_image?: string | null;
+  brand_id?: number | null;
+  brand_name?: string;
+  variant_groups_count?: number; // how many variant groups this product has
 }
+
 
 interface Category {
   category_id: number;
   name: string;
 }
 
+interface Brand {
+  brand_id: number;
+  name: string;
+}
+
 export default function ProductsPage() {
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
+
   const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,6 +59,7 @@ export default function ProductsPage() {
     sku: "",
     stockQuantity: "",
     categoryId: "",
+    brandId: "",
     status: "Active",
   });
   const [files, setFiles] = useState<FileList | null>(null);
@@ -55,14 +70,33 @@ export default function ProductsPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
+  // Variants Modal states
+  const [isVariantsModalOpen, setIsVariantsModalOpen] = useState(false);
+  const [selectedVariantProduct, setSelectedVariantProduct] = useState<Product | null>(null);
+  const [variantsList, setVariantsList] = useState<any[]>([]);
+  const [loadingVariants, setLoadingVariants] = useState(false);
+  const [savingVariants, setSavingVariants] = useState(false);
+  const [variantsError, setVariantsError] = useState<string | null>(null);
+
   const fetchCategories = async () => {
     try {
-      const res = await api.get("/products/categories");
-      if (res.success && res.categories) {
-        setCategories(res.categories);
+      const res: any = await api.get("/categories");
+      if (res.success && res.data) {
+        setCategories(res.data);
       }
     } catch (err) {
       console.error("Failed to load categories", err);
+    }
+  };
+
+  const fetchBrands = async () => {
+    try {
+      const res: any = await api.get("/brands");
+      if (res.success && res.data) {
+        setBrands(res.data);
+      }
+    } catch (err) {
+      console.error("Failed to load brands", err);
     }
   };
 
@@ -78,12 +112,11 @@ export default function ProductsPage() {
       if (categoryFilter) {
         params.append("category", categoryFilter);
       }
-      
-      const res = await api.get(`/products?${params.toString()}`);
-      if (res.success && res.products) {
-        setProducts(res.products);
-        if (res.pagination) {
-          setTotalPages(res.pagination.pages || 1);
+      const res: any = await api.get(`/products?${params.toString()}`);
+      if (res.success && res.data) {
+        setProducts(res.data.data);
+        if (res.data.total) {
+          setTotalPages(Math.max(1, Math.ceil(res.data.total / limit)));
         }
       }
     } catch (err: any) {
@@ -96,6 +129,7 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchCategories();
+    fetchBrands();
   }, []);
 
   useEffect(() => {
@@ -117,6 +151,7 @@ export default function ProductsPage() {
       sku: "",
       stockQuantity: "",
       categoryId: categories[0]?.category_id.toString() || "",
+      brandId: "",
       status: "Active",
     });
     setFiles(null);
@@ -133,6 +168,7 @@ export default function ProductsPage() {
       sku: product.sku,
       stockQuantity: product.stock_quantity.toString(),
       categoryId: product.category_id.toString(),
+      brandId: product.brand_id?.toString() || "",
       status: product.status,
     });
     setFiles(null);
@@ -153,6 +189,7 @@ export default function ProductsPage() {
       data.append("sku", formData.sku);
       data.append("stockQuantity", formData.stockQuantity);
       data.append("categoryId", formData.categoryId);
+      data.append("brandId", formData.brandId);
       data.append("status", formData.status);
 
       if (files) {
@@ -196,6 +233,57 @@ export default function ProductsPage() {
     }
   };
 
+  const handleRowDoubleClick = async (product: Product) => {
+    if (product.variant_groups_count && product.variant_groups_count > 0) {
+      setSelectedVariantProduct(product);
+      setIsVariantsModalOpen(true);
+      setLoadingVariants(true);
+      setVariantsError(null);
+      try {
+        const res: any = await api.get(`/products/${product.product_id}/variants`);
+        if (res.success && res.data && res.data.variants) {
+          setVariantsList(res.data.variants);
+        }
+      } catch (err: any) {
+        setVariantsError(err.message || "Failed to load variants.");
+      } finally {
+        setLoadingVariants(false);
+      }
+    }
+  };
+
+  const updateVariantCombination = (idx: number, field: string, value: string) => {
+    setVariantsList((prev) =>
+      prev.map((v, i) => (i === idx ? { ...v, [field]: value } : v))
+    );
+  };
+
+  const handleSaveVariants = async () => {
+    setVariantsError(null);
+    setSavingVariants(true);
+    try {
+      for (const variant of variantsList) {
+        const stockVal = parseInt(String(variant.stock));
+        const priceVal = variant.price !== "" && variant.price !== null && variant.price !== undefined
+          ? parseFloat(String(variant.price))
+          : null;
+        const payload: any = {
+          sku: variant.sku,
+        };
+        if (!isNaN(stockVal)) payload.stock = stockVal;
+        if (priceVal !== null && !isNaN(priceVal)) payload.price = priceVal;
+        await api.patch(`/products/variants/${variant.variant_id}`, payload);
+      }
+      setIsVariantsModalOpen(false);
+      fetchProducts();
+    } catch (err: any) {
+      console.error(err);
+      setVariantsError(err.message || "Failed to save variants.");
+    } finally {
+      setSavingVariants(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -210,12 +298,14 @@ export default function ProductsPage() {
         </div>
         <div>
           <button
-            onClick={openAddModal}
+            onClick={() => router.push("/products/create")}
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-brand-600 transition-colors shadow-theme-xs cursor-pointer"
           >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
             Add Product
           </button>
         </div>
+
       </div>
 
       {/* Filter / Search Bar */}
@@ -291,8 +381,12 @@ export default function ProductsPage() {
                       Price
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Variants
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Stock
                     </th>
+
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
@@ -303,21 +397,19 @@ export default function ProductsPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                   {products.map((product) => (
-                    <tr key={product.product_id} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.01]">
+                    <tr key={product.product_id} onDoubleClick={() => handleRowDoubleClick(product)} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.01] cursor-pointer">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-                            {product.primary_image ? (
-                              <img
-                                src={`http://localhost:5000${product.primary_image}`}
-                                alt={product.name}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                            )}
+                            <img
+                              src={getImageUrl(product.primary_image)}
+                              alt={product.name}
+                              className="h-full w-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzk0YTNiOCIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3R5bGU9ImJhY2tncm91bmQtY29sb3I6I2YxZjVmOSI+PHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiByeD0iMiIgcnk9IjIiLz48Y2lyY2xlIGN4PSI4LjUiIGN5PSI4LjUiIHI9IjEuNSIvPjxwb2x5bGluZSBwb2ludHM9IjIxIDE1IDE2IDEwIDUgMjEiLz48L3N2Zz4=`;
+                              }}
+                            />
                           </div>
                           <div>
                             <div className="text-sm font-semibold text-gray-800 dark:text-white">
@@ -339,8 +431,18 @@ export default function ProductsPage() {
                         ${product.price.toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 font-normal">
+                        {product.variant_groups_count && product.variant_groups_count > 0 ? (
+                          <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-purple-50 text-purple-700 dark:bg-purple-950/20 dark:text-purple-400">
+                            {product.variant_groups_count} group{product.variant_groups_count > 1 ? "s" : ""}
+                          </span>
+                        ) : (
+                          <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 font-normal">
                         {product.stock_quantity}
                       </td>
+
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                           product.status === "Active"
@@ -421,7 +523,7 @@ export default function ProductsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                 Price ($) *
@@ -461,6 +563,23 @@ export default function ProductsPage() {
                 {categories.map((cat) => (
                   <option key={cat.category_id} value={cat.category_id}>
                     {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                Brand
+              </label>
+              <select
+                value={formData.brandId}
+                onChange={(e) => setFormData({ ...formData, brandId: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent dark:bg-gray-900 px-4 py-2.5 text-sm text-gray-800 dark:text-white focus:border-brand-500 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10"
+              >
+                <option value="">No Brand</option>
+                {brands.map((brand) => (
+                  <option key={brand.brand_id} value={brand.brand_id}>
+                    {brand.name}
                   </option>
                 ))}
               </select>
@@ -551,6 +670,91 @@ export default function ProductsPage() {
             className="px-4 py-2 text-sm font-semibold text-white bg-error-500 hover:bg-error-600 rounded-lg transition-colors shadow-theme-xs disabled:opacity-50 cursor-pointer"
           >
             {submitting ? "Deleting..." : "Delete"}
+          </button>
+        </div>
+      </Modal>
+
+      {/* Variants Edit Modal */}
+      <Modal isOpen={isVariantsModalOpen} onClose={() => setIsVariantsModalOpen(false)} className="max-w-4xl p-6">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
+          Edit Variants: {selectedVariantProduct?.name}
+        </h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+          Modify the pricing and stock availability of different variations.
+        </p>
+        
+        {variantsError && (
+          <div className="mb-4 text-sm text-error-500 bg-error-50 dark:bg-error-950/20 p-3 rounded-lg border border-error-200 dark:border-error-800">
+            {variantsError}
+          </div>
+        )}
+
+        {loadingVariants ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-theme-xs overflow-hidden mb-6">
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead className="bg-gray-50 dark:bg-gray-900/50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Combination</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">SKU *</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Price ($)</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Stock *</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {variantsList.map((variant, idx) => (
+                    <tr key={variant.variant_id} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.01]">
+                      <td className="px-4 py-3 font-medium text-gray-800 dark:text-white whitespace-nowrap">
+                        <div className="flex flex-wrap gap-1">
+                          {variant.options?.map((opt: any, oi: number) => (
+                            <span key={oi} className="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-xs text-gray-600 dark:text-gray-300">
+                              <span className="text-gray-400 dark:text-gray-500 mr-1">{opt.group_name}:</span>{opt.option_value}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <input type="text" value={variant.sku}
+                          onChange={(e) => updateVariantCombination(idx, "sku", e.target.value.toUpperCase())}
+                          className="w-36 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-1.5 text-xs font-mono text-gray-800 dark:text-white focus:border-brand-500 focus:outline-none" />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input type="number" step="0.01" value={variant.price || ""} placeholder="Base"
+                          onChange={(e) => updateVariantCombination(idx, "price", e.target.value)}
+                          className="w-24 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-1.5 text-xs text-gray-800 dark:text-white focus:border-brand-500 focus:outline-none" />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input type="number" value={variant.stock !== undefined && variant.stock !== null ? variant.stock : ""}
+                          onChange={(e) => updateVariantCombination(idx, "stock", e.target.value)}
+                          className="w-20 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-1.5 text-xs text-gray-800 dark:text-white focus:border-brand-500 focus:outline-none" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+          <button
+            type="button"
+            onClick={() => setIsVariantsModalOpen(false)}
+            className="px-4 py-2.5 text-sm font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSaveVariants}
+            disabled={savingVariants || loadingVariants}
+            className="px-4 py-2.5 text-sm font-semibold text-white bg-brand-500 hover:bg-brand-600 rounded-lg transition-colors shadow-theme-xs disabled:opacity-50 cursor-pointer"
+          >
+            {savingVariants ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </Modal>
