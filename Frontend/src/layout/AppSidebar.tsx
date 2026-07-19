@@ -43,14 +43,39 @@ const navItems: NavItem[] = [
     path: "/categories",
   },
   {
+    icon: <PlugInIcon />,
+    name: "Brands",
+    path: "/brands",
+  },
+  {
     icon: <TableIcon />,
     name: "Orders",
     path: "/orders",
   },
   {
+    icon: <BoxCubeIcon />,
+    name: "Inventory",
+    path: "/inventory",
+  },
+  {
+    icon: <UserCircleIcon />,
+    name: "Customers",
+    path: "/customers",
+  },
+  {
+    icon: <PageIcon />,
+    name: "Reviews",
+    path: "/reviews",
+  },
+  {
     icon: <PieChartIcon />,
     name: "Coupons",
     path: "/coupons",
+  },
+  {
+    icon: <UserCircleIcon />,
+    name: "Staff",
+    path: "/staff",
   },
 ];
 

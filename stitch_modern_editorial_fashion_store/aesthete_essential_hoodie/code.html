@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AESTHETE - Essential Oversized Hoodie</title>
+<!-- Google Fonts: Hanken Grotesk & Bricolage Grotesque -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&amp;family=Hanken+Grotesk:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config injected from Style Guidance -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary": "#000000",
+                        "on-primary-fixed": "#1b1b1b",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-surface": "#2f3131",
+                        "surface": "#f9f9f9",
+                        "on-primary-container": "#848484",
+                        "on-secondary": "#ffffff",
+                        "secondary-container": "#65f9e6",
+                        "on-primary-fixed-variant": "#474747",
+                        "on-surface-variant": "#4c4546",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#f0f1f1",
+                        "surface-variant": "#e2e2e2",
+                        "background": "#f9f9f9",
+                        "on-secondary-fixed-variant": "#005048",
+                        "on-surface": "#1a1c1c",
+                        "surface-bright": "#f9f9f9",
+                        "surface-container-highest": "#e2e2e2",
+                        "primary-fixed": "#e2e2e2",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-container": "#838484",
+                        "secondary-fixed-dim": "#41dcca",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-low": "#f3f3f4",
+                        "secondary-fixed": "#65f9e6",
+                        "primary-container": "#1b1b1b",
+                        "tertiary-fixed-dim": "#c6c6c7",
+                        "surface-tint": "#5e5e5e",
+                        "outline": "#7e7576",
+                        "on-error-container": "#93000a",
+                        "on-background": "#1a1c1c",
+                        "secondary": "#006a60",
+                        "primary-fixed-dim": "#c6c6c6",
+                        "surface-container": "#eeeeee",
+                        "error": "#ba1a1a",
+                        "tertiary-container": "#1a1c1c",
+                        "on-secondary-container": "#007166",
+                        "surface-container-high": "#e8e8e8",
+                        "inverse-primary": "#c6c6c6",
+                        "outline-variant": "#cfc4c5",
+                        "tertiary-fixed": "#e2e2e2",
+                        "primary": "#000000",
+                        "surface-dim": "#dadada",
+                        "on-tertiary-fixed-variant": "#454747",
+                        "on-error": "#ffffff",
+                        "on-secondary-fixed": "#00201c",
+                        "on-tertiary-fixed": "#1a1c1c"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "lg": "48px",
+                        "gutter": "24px",
+                        "xl": "80px",
+                        "md": "24px",
+                        "xs": "4px",
+                        "sm": "12px",
+                        "base": "8px",
+                        "container-max": "1440px"
+                    },
+                    fontFamily: {
+                        "body-md": ["Hanken Grotesk"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "headline-lg": ["Bricolage Grotesque"],
+                        "headline-lg-mobile": ["Bricolage Grotesque"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "headline-md": ["Bricolage Grotesque"],
+                        "display-lg": ["Bricolage Grotesque"]
+                    },
+                    fontSize: {
+                        "body-md": ["16px", { lineHeight: "1.6", letterSpacing: "0.01em", fontWeight: "400" }],
+                        "label-sm": ["12px", { lineHeight: "1.2", letterSpacing: "0.1em", fontWeight: "600" }],
+                        "headline-lg": ["40px", { lineHeight: "1.2", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "headline-lg-mobile": ["32px", { lineHeight: "1.2", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "body-lg": ["18px", { lineHeight: "1.6", letterSpacing: "0.02em", fontWeight: "400" }],
+                        "headline-md": ["24px", { lineHeight: "1.3", letterSpacing: "0em", fontWeight: "600" }],
+                        "display-lg": ["72px", { lineHeight: "1.1", letterSpacing: "-0.04em", fontWeight: "800" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Minimal custom styling for utilities not easily handled by inline tailwind logic without framework overhead */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Accordion transition logic */
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .accordion-item.active .accordion-content {
+            max-height: 500px; /* Arbitrary large height */
+        }
+        .accordion-item.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+        .accordion-icon {
+            transition: transform 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md antialiased selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- JSON Component: TopNavBar -->
+<nav class="bg-surface/80 dark:bg-tertiary/80 backdrop-blur-md fixed top-0 w-full z-50 border-b border-outline-variant/30 transition-all duration-300 ease-in-out flex justify-between items-center px-gutter md:px-xl h-20">
+<!-- Navigation Links (Left) - Hidden on mobile for simplicity, standard responsive pattern -->
+<div class="hidden md:flex items-center gap-md">
+<a class="text-secondary dark:text-secondary-fixed font-bold border-b border-secondary font-body-md text-body-md uppercase tracking-widest py-1" href="#">Shop</a>
+<a class="text-on-surface dark:text-on-tertiary-fixed-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-300 font-body-md text-body-md uppercase tracking-widest py-1" href="#">Collections</a>
+<a class="text-on-surface dark:text-on-tertiary-fixed-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-300 font-body-md text-body-md uppercase tracking-widest py-1" href="#">New Arrivals</a>
+<a class="text-on-surface dark:text-on-tertiary-fixed-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-300 font-body-md text-body-md uppercase tracking-widest py-1" href="#">Men</a>
+<a class="text-on-surface dark:text-on-tertiary-fixed-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-300 font-body-md text-body-md uppercase tracking-widest py-1" href="#">Women</a>
+<a class="text-on-surface dark:text-on-tertiary-fixed-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-300 font-body-md text-body-md uppercase tracking-widest py-1" href="#">Accessories</a>
+</div>
+<!-- Mobile Menu Icon (Placeholder for functionality) -->
+<button class="md:hidden text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<!-- Brand Logo (Center) -->
+<div class="absolute left-1/2 -translate-x-1/2">
+<a class="font-headline-md text-headline-md font-bold tracking-tighter text-primary dark:text-on-primary" href="/">AESTHETE</a>
+</div>
+<!-- Trailing Icons (Right) -->
+<div class="flex items-center gap-sm md:gap-md text-primary dark:text-on-primary">
+<button class="hover:text-secondary transition-colors"><span class="material-symbols-outlined">search</span></button>
+<button class="hover:text-secondary transition-colors"><span class="material-symbols-outlined">favorite</span></button>
+<button class="hover:text-secondary transition-colors"><span class="material-symbols-outlined">shopping_bag</span></button>
+<button class="hidden md:block hover:text-secondary transition-colors"><span class="material-symbols-outlined">person</span></button>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="pt-[100px] md:pt-[120px] pb-xl px-gutter md:px-xl max-w-container-max mx-auto">
+<!-- Breadcrumb (Optional but fits minimalist high-end) -->
+<div class="flex items-center gap-xs font-label-sm text-label-sm text-on-surface-variant uppercase mb-md">
+<a class="hover:text-secondary" href="#">Shop</a>
+<span>/</span>
+<a class="hover:text-secondary" href="#">Men</a>
+<span>/</span>
+<span class="text-on-surface">Hoodies</span>
+</div>
+<!-- Product Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-lg lg:gap-[80px]">
+<!-- Left: Product Gallery (High-Res Editorial) -->
+<div class="lg:col-span-7 flex flex-col gap-sm md:gap-md">
+<!-- Hero Image -->
+<div class="w-full aspect-[3/4] bg-surface rounded-xl overflow-hidden relative group">
+<img alt="Essential Oversized Hoodie Front" class="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-105" data-alt="A high-fashion editorial shot of a model wearing an oversized, premium heavy-weight hoodie in a slate grey color. The model is positioned against a stark, minimalist concrete wall with dramatic, stark lighting that highlights the thick texture of the fabric. The aesthetic is modern, quiet luxury with a moody, sophisticated atmosphere and sharp focus on garment details." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYY7eteRDyD1LRkEYE-0b7m0ADKRWznZ1YE-9j3d9WTwC8xKjhsyl6hZEF0WHHGW_cR8su65hps2GyJb8bQsqqVR-VHEYSyMfEwvSBX5O6lfG5CnkRw5tpAchDv1FnzdUule5wUygvo687lEDTYR-i4XOq9LJm_J36vVEqHUJyISoroz4ctZhmkXCnO89GpWhraAEoWMLmZzSU1PmfqMRoDNZSHdgF1QD0ZuP-niZgobWEhcDYLA20yYcHRlUltPHli26MD7XRQz3-"/>
+</div>
+<!-- Grid of detail shots -->
+<div class="grid grid-cols-2 gap-sm md:gap-md">
+<div class="w-full aspect-[3/4] bg-surface rounded-xl overflow-hidden relative">
+<img alt="Fabric Detail" class="w-full h-full object-cover" data-alt="A close-up, highly detailed macro shot of the premium cotton fabric of a grey hoodie. The image focuses on the heavy weave, the precise stitching along the dropped shoulder seam, and the high-quality ribbed cuffs. Lighting is soft and diffused, creating a serene, tactile feeling that emphasizes quality and minimalist design." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqVgm71lqgzK-FRlB21d7bQ9YIcoD89TjjPEHPnGqE7UTdwU3bbtnpIqpvbW98w5IDNENDLx4H06t9hMHwPENteb9lDSYrfxV6ktD6Kes9b91YBNFlr_w6mNS_1I64g6SzrX7mVXlWsbVqHy3Xpc_RAeWyoEMi9058Zn2vaabcvFt6_Lw5ABnHbL_uE5J3p64mSOT9plMTm9aaZRIW0tQtNfWISSJ-QQAiWR5k-mjkpJdCd1-pgEGj5Ge0rso94Y4AgHan6J_g3TCV"/>
+</div>
+<div class="w-full aspect-[3/4] bg-surface rounded-xl overflow-hidden relative">
+<img alt="Fit Back View" class="w-full h-full object-cover" data-alt="An artistic, conceptual fashion shot showing the back of a model wearing a premium slate grey oversized hoodie. The model is walking away into a vast, empty white studio space. The lighting is bright and airy, creating a clean, high-end digital aesthetic that focuses on the silhouette and drape of the garment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_e6i3HtDjCCGEWj8mLoQFKImWB3EkRHuWkZPvY2_CpS6WqSWh3XUouYU2SsmxH22MBl7Dczk6wX4bdd9stlinFyBLLunwq7JGqHejqLOqrB3MJR3t0rj2ocoWmDEB2TUqbPve8Fd8WSlDftYpe63RFm-tJHB9WvNm8ATPmlxw9JSuXTwm-Bgzai8_Glwmu82_lE-AB3I1WaZ70i2KogRKHqtbZ9SoqNx2yn9ox3ewV4nI_HznQbS3MRB_kcE88SMQh-lypGv8URuk"/>
+</div>
+</div>
+<!-- Final Lifestyle Shot -->
+<div class="w-full aspect-square md:aspect-video bg-surface rounded-xl overflow-hidden relative">
+<img alt="Lifestyle Context" class="w-full h-full object-cover" data-alt="A wide, cinematic lifestyle shot of a person wearing a luxurious oversized hoodie sitting on a minimalist designer chair in a gallery-like space. The room is bathed in cool, natural light filtering through large windows. The mood is calm, elevated, and contemporary, capturing the essence of quiet luxury in an everyday setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCfMgQTexqXJEkesNiwLGA5jpheS5vLrPtNDDlFuTx-XLxCXAvY0ZOsvsua8wFdd4yCDWByudHFwkh-CtQbgCvM_ZYxzrImbH7oMW3VyqEsjGcXFjUVTaJMmcNyOQiRTpb-qoOeMUyWTwZVB1qvBQaQuT9QFQCDFs-fWr-lkUtzLYohNaABfXkSOxHzUBD3z2Pa1oQCc7eYy2P-nGSUwFVzE3aTEQLo18M_oEqaC1cTU1DDzdDBqJJ4CyqTjwG3GrnIu6K05vHbZIGr"/>
+</div>
+</div>
+<!-- Right: Sticky Purchase Panel -->
+<div class="lg:col-span-5 relative">
+<div class="sticky top-[120px] flex flex-col gap-md">
+<!-- Header & Price -->
+<div class="flex flex-col gap-xs">
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary tracking-tighter uppercase">Essential Oversized Hoodie</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">$185 USD</p>
+</div>
+<!-- Description -->
+<p class="font-body-md text-body-md text-on-surface-variant max-w-[400px]">
+                        Engineered for architectural drape. Crafted from heavyweight 500gsm brushed French terry cotton. A dropped shoulder and exaggerated proportions redefine the classic silhouette.
+                    </p>
+<hr class="border-t border-outline-variant/30 my-sm"/>
+<!-- Color Selection -->
+<div class="flex flex-col gap-sm">
+<div class="flex justify-between items-center">
+<span class="font-label-sm text-label-sm text-primary uppercase">Color: <span class="text-on-surface-variant ml-1" id="color-name">Slate</span></span>
+</div>
+<div class="flex gap-sm">
+<!-- Slate -->
+<button aria-label="Slate Color" class="w-10 h-10 rounded-full bg-on-surface-variant border-2 border-primary ring-2 ring-transparent ring-offset-2 hover:ring-outline-variant transition-all focus:outline-none" onclick="document.getElementById('color-name').innerText='Slate'"></button>
+<!-- Bone -->
+<button aria-label="Bone Color" class="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant/50 ring-2 ring-transparent ring-offset-2 hover:ring-outline-variant transition-all focus:outline-none" onclick="document.getElementById('color-name').innerText='Bone'"></button>
+<!-- Onyx -->
+<button aria-label="Onyx Color" class="w-10 h-10 rounded-full bg-tertiary border border-outline-variant/50 ring-2 ring-transparent ring-offset-2 hover:ring-outline-variant transition-all focus:outline-none" onclick="document.getElementById('color-name').innerText='Onyx'"></button>
+</div>
+</div>
+<!-- Size Selection -->
+<div class="flex flex-col gap-sm mt-sm">
+<div class="flex justify-between items-center">
+<span class="font-label-sm text-label-sm text-primary uppercase">Size</span>
+<button class="font-label-sm text-label-sm text-on-surface-variant underline hover:text-primary transition-colors">Size Guide</button>
+</div>
+<div class="grid grid-cols-5 gap-xs">
+<button class="border border-outline-variant py-sm rounded-DEFAULT font-label-sm text-label-sm text-primary hover:border-primary transition-colors focus:outline-none focus:bg-primary focus:text-on-primary">XS</button>
+<button class="border border-outline-variant py-sm rounded-DEFAULT font-label-sm text-label-sm text-primary hover:border-primary transition-colors focus:outline-none focus:bg-primary focus:text-on-primary">S</button>
+<button class="border border-primary bg-primary text-on-primary py-sm rounded-DEFAULT font-label-sm text-label-sm transition-colors focus:outline-none">M</button>
+<button class="border border-outline-variant py-sm rounded-DEFAULT font-label-sm text-label-sm text-primary hover:border-primary transition-colors focus:outline-none focus:bg-primary focus:text-on-primary">L</button>
+<button class="border border-outline-variant py-sm rounded-DEFAULT font-label-sm text-label-sm text-primary hover:border-primary transition-colors focus:outline-none focus:bg-primary focus:text-on-primary">XL</button>
+</div>
+</div>
+<!-- Actions (Qty & CTA) -->
+<div class="flex flex-col md:flex-row gap-sm mt-md">
+<!-- Qty -->
+<div class="flex items-center justify-between border border-outline-variant rounded-DEFAULT h-[56px] px-sm w-full md:w-[120px]">
+<button class="text-on-surface-variant hover:text-primary p-1"><span class="material-symbols-outlined text-[18px]">remove</span></button>
+<span class="font-label-sm text-label-sm">1</span>
+<button class="text-on-surface-variant hover:text-primary p-1"><span class="material-symbols-outlined text-[18px]">add</span></button>
+</div>
+<!-- Add to Bag -->
+<button class="flex-1 bg-secondary text-on-secondary h-[56px] rounded-DEFAULT font-label-sm text-label-sm uppercase tracking-widest hover:opacity-90 transition-opacity flex justify-center items-center gap-xs">
+                            Add to Bag
+                            <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+<div class="mt-xs text-center md:text-left">
+<span class="font-body-md text-body-md text-on-surface-variant text-[14px]">Free shipping on orders over $200.</span>
+</div>
+<!-- Accordions (Minimalist Details) -->
+<div class="mt-lg flex flex-col border-t border-outline-variant/30">
+<!-- Accordion Item 1 -->
+<div class="accordion-item active border-b border-outline-variant/30">
+<button class="w-full py-md flex justify-between items-center text-left focus:outline-none" onclick="this.parentElement.classList.toggle('active')">
+<span class="font-label-sm text-label-sm uppercase text-primary tracking-widest">Fabric &amp; Care</span>
+<span class="material-symbols-outlined text-on-surface-variant accordion-icon">expand_more</span>
+</button>
+<div class="accordion-content">
+<div class="pb-md font-body-md text-body-md text-on-surface-variant">
+<ul class="list-disc pl-5 space-y-1">
+<li>100% Organic Heavyweight Cotton (500gsm)</li>
+<li>Brushed French Terry interior</li>
+<li>Machine wash cold with like colors</li>
+<li>Lay flat to dry to preserve silhouette</li>
+</ul>
+</div>
+</div>
+</div>
+<!-- Accordion Item 2 -->
+<div class="accordion-item border-b border-outline-variant/30">
+<button class="w-full py-md flex justify-between items-center text-left focus:outline-none" onclick="this.parentElement.classList.toggle('active')">
+<span class="font-label-sm text-label-sm uppercase text-primary tracking-widest">Fit Guide</span>
+<span class="material-symbols-outlined text-on-surface-variant accordion-icon">expand_more</span>
+</button>
+<div class="accordion-content">
+<div class="pb-md font-body-md text-body-md text-on-surface-variant">
+                                    Designed with an intentionally exaggerated, oversized fit. Dropped shoulders and a wide body create a sculptural look. We recommend taking your normal size for the intended fit, or sizing down for a more traditional silhouette.
+                                </div>
+</div>
+</div>
+<!-- Accordion Item 3 -->
+<div class="accordion-item border-b border-outline-variant/30">
+<button class="w-full py-md flex justify-between items-center text-left focus:outline-none" onclick="this.parentElement.classList.toggle('active')">
+<span class="font-label-sm text-label-sm uppercase text-primary tracking-widest">Sustainability</span>
+<span class="material-symbols-outlined text-on-surface-variant accordion-icon">expand_more</span>
+</button>
+<div class="accordion-content">
+<div class="pb-md font-body-md text-body-md text-on-surface-variant">
+                                    Produced in small batches in Portugal using GOTS certified organic cotton. Our supply chain prioritizes fair labor practices and minimal environmental impact. Shipped in 100% biodegradable packaging.
+                                </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Related Products Section -->
+<section class="mt-[120px] md:mt-[160px]">
+<div class="flex justify-between items-end mb-lg border-b border-outline-variant/30 pb-sm">
+<h2 class="font-headline-md text-headline-md text-primary tracking-tighter uppercase">Complete The Look</h2>
+<a class="hidden md:flex font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest hover:text-primary transition-colors items-center gap-xs" href="#">
+                    View All <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-sm md:gap-md">
+<!-- Product Card 1 -->
+<a class="group flex flex-col gap-xs cursor-pointer" href="#">
+<div class="w-full aspect-[3/4] bg-surface-container-low rounded-xl overflow-hidden relative mb-xs">
+<img alt="Tailored Wide Leg Trouser" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="A clean, minimalist product shot of wide-leg tailored trousers in a dark grey slate color. High quality fabric, soft studio lighting on a light grey background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMK547FW9Jd8QQaLLJ4wzZ-kUP2y0HCJVr4htTi_2dqjuPhCj-iPPTuuTx-fgWXFsg5rEerxOZgvjC0QBrXLEES_R8pwl-QqX0FqCV7HMKeqMaJa9cJ7eRKYUfAFAMfRLYT0SaExPLrW8PqtHiEdF6e989M3RdbQrDPQaVs3ItLQ0v6ZPE7vvrtJBLlZeCPGcN-3v_xMxzzvpR3j5llflukPhobfr7hIw3wOeR7arXVdmLAJQed0niAlBRRv90XicgcAb-XbVz-GmB"/>
+<!-- Hover Overlay for tactile depth -->
+<div class="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors duration-300"></div>
+</div>
+<h3 class="font-label-sm text-label-sm text-primary uppercase">Tailored Wide Leg Trouser</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">$220</p>
+</a>
+<!-- Product Card 2 -->
+<a class="group flex flex-col gap-xs cursor-pointer" href="#">
+<div class="w-full aspect-[3/4] bg-surface-container-low rounded-xl overflow-hidden relative mb-xs">
+<img alt="Heavyweight Base Tee" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="A minimalist product shot of a crisp white, heavy-weight cotton t-shirt. The garment is styled flat or on an invisible mannequin against a bright white background. Clean, high-end fashion aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAJaChJrRYVEEz1MCLbB44m9V9EA2y6LcWJbVpMdJS_wRdpCs61CuWuSSBNrKwpFzijuiKA_euRdgGgk86LgoAHZXFY54QUQ5hGoWKobWo7ShHjr6cMuHRUtB0vCub6xB_rQlJJf_hLeg19moIql0iJNWUrRnAm_wR7PwmXSyBnXfoueD8KurlkxvK56AMi77CNx8V-NxL9urY-RT8sMq2iZ9YnDJEfJ4sVYd2NfClpatCHxKiuzS5v0D6W8X09tKnezrnjJME8M36"/>
+</div>
+<h3 class="font-label-sm text-label-sm text-primary uppercase">Heavyweight Base Tee</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">$85</p>
+</a>
+<!-- Product Card 3 -->
+<a class="group flex flex-col gap-xs cursor-pointer" href="#">
+<div class="w-full aspect-[3/4] bg-surface-container-low rounded-xl overflow-hidden relative mb-xs">
+<img alt="Technical Crossbody" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="A sleek, modern cross-body bag made of black technical fabric with matte black metal hardware. The lighting highlights the utilitarian design and premium materials against a soft grey background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtY0UPCNcT_Q-xvprtY15oSMofvM2PPiynaNmtPv0bxnprbTY6-iH6NP_9ptlywLpOBig2wdFjCZby_3mA896x25ajn6LCp9OgsY7XXxI-9L1bAmlw7mLlDHVk1GzWr0PppPUb1bY6o8HXl6rP51STYmkdRc8bkVDlZm8odr7yDOHsEph2WJZl2PKXp0E9wkAvhpakUtBsEthJ0-YWKZr1tb6cYCFDhTpiQWv7YYOeDMjhzGZrDft6wdFE360jp9ZJU-BAyiyIvmNW"/>
+</div>
+<h3 class="font-label-sm text-label-sm text-primary uppercase">Technical Crossbody</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">$145</p>
+</a>
+<!-- Product Card 4 -->
+<a class="group flex flex-col gap-xs cursor-pointer" href="#">
+<div class="w-full aspect-[3/4] bg-surface-container-low rounded-xl overflow-hidden relative mb-xs">
+<img alt="Architectural Sneaker" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="A pair of minimalist, chunky-soled sneakers in a bone white colorway. The design is architectural and clean, photographed with sharp studio lighting on a matching bone background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnamYzdsJuEnUSFuFPNo9x2pWKrEa6wOYuyraZrrsBYjk81GPZ9fwBEz9D36sd5a1gDSoNO_x_daL05LNwE4hvxj1cP_io5CtLAHzdsGsXItYBCRncyQ9EbmXhkkYRF9aAZneCRNQxZO1_4gHg2kWLYqMTBw0arTbQvuO8c-ramEcpCL4fUHPEGqLScM4o3l87S4EYS4IIiYMbhsGZsiMuiJaADTRryf_Hc7Ja4pc8LXMV67EkOzsYSIHNu5UaxI3PrDLMlW0FWkhx"/>
+</div>
+<h3 class="font-label-sm text-label-sm text-primary uppercase">Architectural Sneaker</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">$295</p>
+</a>
+</div>
+</section>
+</main>
+<!-- JSON Component: Footer -->
+<footer class="bg-surface dark:bg-tertiary text-on-surface dark:text-on-tertiary font-body-md text-body-md w-full pt-xl pb-lg border-t border-outline-variant mt-xl">
+<div class="max-w-container-max mx-auto px-gutter md:px-xl grid grid-cols-1 md:grid-cols-4 gap-lg">
+<!-- Brand Column -->
+<div class="flex flex-col gap-sm">
+<a class="font-headline-lg text-headline-lg font-bold text-primary dark:text-on-primary tracking-tighter" href="/">AESTHETE</a>
+<p class="text-on-surface-variant dark:text-on-tertiary-fixed-variant text-[14px]">
+                    © 2024 AESTHETE. ARCHITECTURAL MINIMALISM.
+                </p>
+</div>
+<!-- Empty Column for spacing on desktop -->
+<div class="hidden md:block"></div>
+<!-- Links Column 1 -->
+<div class="flex flex-col gap-sm">
+<h4 class="font-label-sm text-label-sm uppercase tracking-widest text-primary dark:text-on-primary font-bold mb-xs">Information</h4>
+<a class="text-on-surface-variant dark:text-on-tertiary-fixed-variant hover:text-secondary dark:hover:text-secondary-fixed underline transition-all opacity-100 hover:opacity-80" href="#">Sustainability</a>
+<a class="text-on-surface-variant dark:text-on-tertiary-fixed-variant hover:text-secondary dark:hover:text-secondary-fixed underline transition-all opacity-100 hover:opacity-80" href="#">Privacy Policy</a>
+</div>
+<!-- Links Column 2 -->
+<div class="flex flex-col gap-sm">
+<h4 class="font-label-sm text-label-sm uppercase tracking-widest text-primary dark:text-on-primary font-bold mb-xs">Customer Care</h4>
+<a class="text-on-surface-variant dark:text-on-tertiary-fixed-variant hover:text-secondary dark:hover:text-secondary-fixed underline transition-all opacity-100 hover:opacity-80" href="#">Shipping &amp; Returns</a>
+<a class="text-on-surface-variant dark:text-on-tertiary-fixed-variant hover:text-secondary dark:hover:text-secondary-fixed underline transition-all opacity-100 hover:opacity-80" href="#">Contact</a>
+<a class="text-on-surface-variant dark:text-on-tertiary-fixed-variant hover:text-secondary dark:hover:text-secondary-fixed underline transition-all opacity-100 hover:opacity-80" href="#">Store Locator</a>
+</div>
+</div>
+</footer>
+</body></html>

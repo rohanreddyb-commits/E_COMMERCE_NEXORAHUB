@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 import { BadRequestError } from "../utils/customError";
 
-const uploadDir = path.join(__dirname, "../../uploads");
+const uploadDir = path.join(process.cwd(), "uploads");
 
 // Self-healing: Create uploads directory if it does not exist
 if (!fs.existsSync(uploadDir)) {
@@ -12,12 +12,15 @@ if (!fs.existsSync(uploadDir)) {
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
+    console.log(`[Multer] Upload destination resolved to: ${uploadDir}`);
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     const ext = path.extname(file.originalname);
-    cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+    const generatedFilename = `${file.fieldname}-${uniqueSuffix}${ext}`;
+    console.log(`[Multer] File upload started: originalname=${file.originalname}, fieldname=${file.fieldname}, generatedFilename=${generatedFilename}`);
+    cb(null, generatedFilename);
   },
 });
 

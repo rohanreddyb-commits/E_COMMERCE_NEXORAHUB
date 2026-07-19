@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AESTHETE Checkout</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600&amp;family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-variant": "#e2e2e2",
+                      "surface-bright": "#f9f9f9",
+                      "on-error-container": "#93000a",
+                      "secondary-fixed-dim": "#41dcca",
+                      "on-secondary-fixed-variant": "#005048",
+                      "on-secondary-fixed": "#00201c",
+                      "secondary": "#006a60",
+                      "on-tertiary": "#ffffff",
+                      "tertiary-fixed-dim": "#c6c6c7",
+                      "on-surface": "#1a1c1c",
+                      "error-container": "#ffdad6",
+                      "outline-variant": "#cfc4c5",
+                      "error": "#ba1a1a",
+                      "tertiary-fixed": "#e2e2e2",
+                      "primary": "#000000",
+                      "on-tertiary-fixed": "#1a1c1c",
+                      "on-primary-fixed-variant": "#474747",
+                      "on-tertiary-fixed-variant": "#454747",
+                      "on-background": "#1a1c1c",
+                      "surface-tint": "#5e5e5e",
+                      "on-primary-container": "#848484",
+                      "on-tertiary-container": "#838484",
+                      "primary-fixed-dim": "#c6c6c6",
+                      "on-secondary-container": "#007166",
+                      "primary-fixed": "#e2e2e2",
+                      "surface-container-highest": "#e2e2e2",
+                      "on-primary": "#ffffff",
+                      "surface-container": "#eeeeee",
+                      "tertiary-container": "#1a1c1c",
+                      "inverse-primary": "#c6c6c6",
+                      "surface-container-high": "#e8e8e8",
+                      "secondary-container": "#65f9e6",
+                      "surface": "#f9f9f9",
+                      "on-secondary": "#ffffff",
+                      "background": "#f9f9f9",
+                      "on-surface-variant": "#4c4546",
+                      "inverse-surface": "#2f3131",
+                      "on-primary-fixed": "#1b1b1b",
+                      "primary-container": "#1b1b1b",
+                      "outline": "#7e7576",
+                      "inverse-on-surface": "#f0f1f1",
+                      "on-error": "#ffffff",
+                      "surface-container-low": "#f3f3f4",
+                      "surface-container-lowest": "#ffffff",
+                      "tertiary": "#000000",
+                      "surface-dim": "#dadada",
+                      "secondary-fixed": "#65f9e6"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "lg": "48px",
+                      "gutter": "24px",
+                      "base": "8px",
+                      "sm": "12px",
+                      "xl": "80px",
+                      "md": "24px",
+                      "xs": "4px",
+                      "container-max": "1440px"
+              },
+              "fontFamily": {
+                      "label-sm": [
+                              "Hanken Grotesk"
+                      ],
+                      "display-lg": [
+                              "Bricolage Grotesque"
+                      ],
+                      "headline-md": [
+                              "Bricolage Grotesque"
+                      ],
+                      "body-lg": [
+                              "Hanken Grotesk"
+                      ],
+                      "headline-lg-mobile": [
+                              "Bricolage Grotesque"
+                      ],
+                      "headline-lg": [
+                              "Bricolage Grotesque"
+                      ],
+                      "body-md": [
+                              "Hanken Grotesk"
+                      ]
+              },
+              "fontSize": {
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "0.1em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "72px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.04em",
+                                      "fontWeight": "800"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.3",
+                                      "letterSpacing": "0em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-lg": [
+                              "40px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "letterSpacing": "0.01em",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+            -webkit-font-smoothing: antialiased;
+        }
+        /* Custom scrollbar for minimalist look if needed */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: theme('colors.surface-variant');
+            border-radius: 4px;
+        }
+      </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="flex flex-col min-h-screen pt-16 pb-24 md:pb-0">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 flex justify-between items-center px-gutter h-16 w-full flat no shadows">
+<button class="text-on-surface-variant dark:text-on-surface-variant hover:opacity-70 transition-opacity flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+</button>
+<div class="font-headline-md text-headline-md tracking-tighter text-primary dark:text-on-surface uppercase">AESTHETE</div>
+<div class="w-6 h-6"></div> <!-- Spacer for center alignment -->
+</header>
+<main class="flex-grow w-full max-w-lg mx-auto px-gutter py-md flex flex-col gap-xl">
+<!-- Express Checkout -->
+<section class="flex flex-col gap-sm">
+<h2 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest text-center mb-base">Express Checkout</h2>
+<div class="flex flex-col gap-base">
+<button class="w-full bg-black text-white rounded-lg h-12 flex items-center justify-center gap-2 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">apps</span> Pay
+                </button>
+<button class="w-full bg-white border border-outline-variant rounded-lg h-12 flex items-center justify-center gap-2 hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined">wallet</span> Google Pay
+                </button>
+</div>
+<div class="flex items-center gap-4 my-4">
+<div class="flex-1 h-px bg-outline-variant/30"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">OR</span>
+<div class="flex-1 h-px bg-outline-variant/30"></div>
+</div>
+</section>
+<!-- Shipping Information -->
+<section class="flex flex-col gap-md">
+<h2 class="font-headline-md text-headline-md text-primary">Shipping Information</h2>
+<form class="flex flex-col gap-sm">
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant">Email</label>
+<input class="bg-transparent border-b border-outline-variant/50 focus:border-primary focus:ring-0 px-0 py-2 font-body-md text-body-md transition-colors placeholder:text-outline-variant" placeholder="Email" required="" type="email"/>
+</div>
+<div class="grid grid-cols-2 gap-md mt-sm">
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant">First Name</label>
+<input class="bg-transparent border-b border-outline-variant/50 focus:border-primary focus:ring-0 px-0 py-2 font-body-md text-body-md transition-colors placeholder:text-outline-variant" placeholder="First Name" required="" type="text"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant">Last Name</label>
+<input class="bg-transparent border-b border-outline-variant/50 focus:border-primary focus:ring-0 px-0 py-2 font-body-md text-body-md transition-colors placeholder:text-outline-variant" placeholder="Last Name" required="" type="text"/>
+</div>
+</div>
+<div class="flex flex-col gap-xs mt-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant">Address</label>
+<input class="bg-transparent border-b border-outline-variant/50 focus:border-primary focus:ring-0 px-0 py-2 font-body-md text-body-md transition-colors placeholder:text-outline-variant" placeholder="Street Address" required="" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-md mt-sm">
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant">City</label>
+<input class="bg-transparent border-b border-outline-variant/50 focus:border-primary focus:ring-0 px-0 py-2 font-body-md text-body-md transition-colors placeholder:text-outline-variant" placeholder="City" required="" type="text"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant">Postal Code</label>
+<input class="bg-transparent border-b border-outline-variant/50 focus:border-primary focus:ring-0 px-0 py-2 font-body-md text-body-md transition-colors placeholder:text-outline-variant" placeholder="ZIP" required="" type="text"/>
+</div>
+</div>
+</form>
+</section>
+<!-- Payment Method -->
+<section class="flex flex-col gap-md">
+<div class="flex justify-between items-center">
+<h2 class="font-headline-md text-headline-md text-primary">Payment</h2>
+<span class="material-symbols-outlined text-secondary text-sm">lock</span>
+</div>
+<div class="p-md border border-outline-variant/30 rounded-xl bg-surface-container-lowest flex flex-col gap-sm">
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant">Card Number</label>
+<div class="relative">
+<input class="w-full bg-transparent border-b border-outline-variant/50 focus:border-primary focus:ring-0 px-0 py-2 font-body-md text-body-md transition-colors placeholder:text-outline-variant pr-10" placeholder="0000 0000 0000 0000" type="text"/>
+<span class="material-symbols-outlined absolute right-0 top-1/2 -translate-y-1/2 text-outline-variant">credit_card</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-md mt-sm">
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant">Expiration</label>
+<input class="bg-transparent border-b border-outline-variant/50 focus:border-primary focus:ring-0 px-0 py-2 font-body-md text-body-md transition-colors placeholder:text-outline-variant" placeholder="MM/YY" type="text"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant">CVC</label>
+<input class="bg-transparent border-b border-outline-variant/50 focus:border-primary focus:ring-0 px-0 py-2 font-body-md text-body-md transition-colors placeholder:text-outline-variant" placeholder="123" type="text"/>
+</div>
+</div>
+</div>
+</section>
+<!-- Order Summary -->
+<section class="flex flex-col gap-md">
+<h2 class="font-headline-md text-headline-md text-primary">Summary</h2>
+<div class="flex flex-col gap-base bg-surface-container-low p-md rounded-xl">
+<div class="flex items-center gap-sm">
+<div class="bg-cover bg-center w-16 h-16 rounded-lg bg-surface-variant" data-alt="A minimalist overhead shot of a sleek, black structured leather handbag resting on a pristine white marble surface with sharp, defined shadows. The aesthetic is high-fashion, clean, and modern." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDDy2LYTxkjcxGwZqk45nBCJYRHS8ep-S7_XVi3kiYTB1yOsv4LC-zipGz3pWATpN6Ixc1k8Zq_DJLOrKueEZKr_F366e78eNa1t91RfavPRD2V4QsE6U15EPXycIB9lmDLkTjiCa2SWpk5URxwV2lVmmpcwBEwzQpNVim5iCd2bSZOuHuHzaiIGkw1jC1cxIXR8YpPV7uDVWmuagkXkLQwqw1Q-kqT4HeYzpWSHi3o7PNDCBfKiMax_EG8oozCq6cw2Ydjk787OGec')"></div>
+<div class="flex flex-col flex-grow">
+<span class="font-body-md text-body-md text-primary font-bold">Obsidian Structured Tote</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Qty: 1</span>
+</div>
+<span class="font-body-md text-body-md text-primary">$450.00</span>
+</div>
+<div class="h-px bg-outline-variant/20 my-2"></div>
+<div class="flex justify-between items-center">
+<span class="font-body-md text-body-md text-on-surface-variant">Subtotal</span>
+<span class="font-body-md text-body-md text-primary">$450.00</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-md text-body-md text-on-surface-variant">Shipping</span>
+<span class="font-body-md text-body-md text-primary">Free</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-md text-body-md text-on-surface-variant">Tax</span>
+<span class="font-body-md text-body-md text-primary">$36.00</span>
+</div>
+<div class="h-px bg-outline-variant/50 my-2"></div>
+<div class="flex justify-between items-center">
+<span class="font-headline-md text-headline-md text-primary">Total</span>
+<span class="font-headline-md text-headline-md text-primary">$486.00</span>
+</div>
+</div>
+</section>
+<!-- Pay Button -->
+<div class="mt-md mb-xl">
+<button class="w-full bg-primary text-on-primary font-label-sm text-label-sm uppercase tracking-widest py-4 px-8 hover:opacity-80 transition-opacity flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">lock</span>
+                Pay $486.00
+            </button>
+<p class="text-center font-label-sm text-label-sm text-on-surface-variant mt-base">Payments are secure and encrypted.</p>
+</div>
+</main>
+<!-- Suppressed BottomNavBar as this is a transactional flow -->
+</body></html>

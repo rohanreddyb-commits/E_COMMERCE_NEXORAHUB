@@ -34,9 +34,9 @@ export default function CategoriesPage() {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/products/categories");
-      if (res.success && res.categories) {
-        setCategories(res.categories);
+      const res: any = await api.get("/categories");
+      if (res.success && res.data) {
+        setCategories(res.data);
       }
     } catch (err: any) {
       console.error(err);
@@ -71,9 +71,9 @@ export default function CategoriesPage() {
 
     try {
       if (editingCategory) {
-        await api.put(`/products/categories/${editingCategory.category_id}`, formData);
+        await api.put(`/categories/${editingCategory.category_id}`, formData);
       } else {
-        await api.post("/products/categories", formData);
+        await api.post("/categories", formData);
       }
       setIsModalOpen(false);
       fetchCategories();
@@ -94,7 +94,7 @@ export default function CategoriesPage() {
     if (!deletingId) return;
     setSubmitting(true);
     try {
-      await api.delete(`/products/categories/${deletingId}`);
+      await api.delete(`/categories/${deletingId}`);
       setIsDeleteOpen(false);
       fetchCategories();
     } catch (err: any) {

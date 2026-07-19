@@ -69,7 +69,7 @@ export const getPool = async (): Promise<sql.ConnectionPool> => {
  */
 export const executeQuery = async (
   query: string,
-  params: Record<string, { type: sql.ISqlType; value: any }> = {}
+  params: Record<string, { type: any; value: any }> = {}
 ): Promise<sql.IResult<any>> => {
   const connectionPool = await getPool();
   const request = connectionPool.request();

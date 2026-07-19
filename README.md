@@ -1,5 +1,6 @@
 # E_COMMERCE_NEXORAHUB
 
+
 A full-stack e-commerce application featuring a modern Next.js frontend and a robust Node.js/Express backend.
 
 ## Tech Stack
