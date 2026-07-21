@@ -1,0 +1,76 @@
+import type { Config } from "tailwindcss";
+
+const config: Config = {
+  darkMode: "class",
+  content: [
+    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        "surface": "#f9f9f9",
+        "surface-dim": "#dadada",
+        "surface-bright": "#f9f9f9",
+        "surface-container-lowest": "#ffffff",
+        "surface-container-low": "#f3f3f4",
+        "surface-container": "#eeeeee",
+        "surface-container-high": "#e8e8e8",
+        "surface-container-highest": "#e2e2e2",
+        "on-surface": "#1a1c1c",
+        "on-surface-variant": "#4c4546",
+        "inverse-surface": "#2f3131",
+        "inverse-on-surface": "#f0f1f1",
+        "outline": "#7e7576",
+        "outline-variant": "#cfc4c5",
+        "surface-tint": "#5e5e5e",
+        "primary": "#000000",
+        "on-primary": "#ffffff",
+        "primary-container": "#1b1b1b",
+        "on-primary-container": "#848484",
+        "inverse-primary": "#c6c6c6",
+        "secondary": "#006a60",
+        "on-secondary": "#ffffff",
+        "secondary-container": "#65f9e6",
+        "on-secondary-container": "#007166",
+        "tertiary": "#000000",
+        "on-tertiary": "#ffffff",
+        "tertiary-container": "#1a1c1c",
+        "on-tertiary-container": "#838484",
+        "error": "#ba1a1a",
+        "on-error": "#ffffff",
+        "error-container": "#ffdad6",
+        "on-error-container": "#93000a",
+        "primary-fixed": "#e2e2e2",
+        "primary-fixed-dim": "#c6c6c6",
+        "on-primary-fixed": "#1b1b1b",
+        "on-primary-fixed-variant": "#474747",
+        "secondary-fixed": "#65f9e6",
+        "secondary-fixed-dim": "#41dcca",
+        "on-secondary-fixed": "#00201c",
+        "on-secondary-fixed-variant": "#005048",
+        "tertiary-fixed": "#e2e2e2",
+        "tertiary-fixed-dim": "#c6c6c7",
+        "on-tertiary-fixed": "#1a1c1c",
+        "on-tertiary-fixed-variant": "#454747",
+        "background": "#f9f9f9",
+        "on-background": "#1a1c1c",
+        "surface-variant": "#e2e2e2",
+        "neo-teal": "#37D6C4"
+      },
+      fontFamily: {
+        headline: ["'Bricolage Grotesque'", "sans-serif"],
+        body: ["'Hanken Grotesk'", "sans-serif"],
+        sans: ["'Hanken Grotesk'", "sans-serif"],
+      },
+      borderRadius: {
+        'xl': '1.5rem',
+        '2xl': '2rem',
+      }
+    },
+  },
+  plugins: [],
+};
+
+export default config;
