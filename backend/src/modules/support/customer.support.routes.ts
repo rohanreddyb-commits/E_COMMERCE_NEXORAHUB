@@ -3,13 +3,14 @@ import { CustomerSupportController } from './customer.support.controller';
 import { authenticateCustomer } from '../../common/middleware/customer.auth.middleware';
 import { body, param } from 'express-validator';
 import { validateRequest } from '../../common/middleware/validate.middleware';
+import { contentWriteRateLimiter } from '../../common/middleware/rateLimiter.middleware';
 
 const router = Router();
 const controller = new CustomerSupportController();
 
 router.use(authenticateCustomer);
 
-router.post('/', [
+router.post('/', contentWriteRateLimiter, [
   body('subject').trim().notEmpty().isLength({ max: 200 }),
   body('category').trim().notEmpty().isIn(['Order Issue', 'Payment Issue', 'Product Issue', 'Delivery', 'Account', 'General']),
   body('priority').optional().isIn(['Low', 'Medium', 'High', 'Urgent']),

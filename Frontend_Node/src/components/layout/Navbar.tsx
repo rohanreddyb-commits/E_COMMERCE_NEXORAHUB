@@ -1,77 +1,127 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useCartStore } from '@/store/useCartStore';
+import { useCartStore, useCartCount } from '@/store/useCartStore';
 import { useWishlistStore } from '@/store/useWishlistStore';
+import { useAuth } from '@/context/AuthContext';
+import { catalogService, notificationService } from '@/services';
+import { useApiResource } from '@/hooks/useApiResource';
+import { initials } from '@/lib/format';
+import { cn } from '@/lib/utils';
+import { SearchOverlay } from './SearchOverlay';
+
+const ACCOUNT_LINKS = [
+  { label: 'My Orders', href: '/account/orders', icon: 'package_2' },
+  { label: 'Wishlist', href: '/account/wishlist', icon: 'favorite' },
+  { label: 'Addresses', href: '/account/addresses', icon: 'home_pin' },
+  { label: 'My Reviews', href: '/account/reviews', icon: 'reviews' },
+  { label: 'Notifications', href: '/account/notifications', icon: 'notifications' },
+  { label: 'Profile Settings', href: '/account/profile', icon: 'settings' },
+];
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
-  const { getTotalItems, openDrawer } = useCartStore();
-  const { items: wishlistItems } = useWishlistStore();
-  const [mounted, setMounted] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
+
+  const openDrawer = useCartStore((s) => s.openDrawer);
+
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
+
+  // Gated on hydration inside the hook so the server-rendered badge matches
+  // the first client render — persisted guest items are absent during SSR.
+  const cartCount = useCartCount();
+
+  const wishlistCount = useWishlistStore((s) =>
+    !s.hydrated ? 0 : isAuthenticated ? s.serverItems.length : s.guestItems.length
+  );
+
+  const { data: categories } = useApiResource(
+    (signal) => catalogService.categories(signal),
+    [],
+    { initialData: [] }
+  );
+
+  const { data: unread } = useApiResource(
+    (signal) => notificationService.unreadCount(signal),
+    [isAuthenticated],
+    { enabled: isAuthenticated }
+  );
+
+  // Close menus on navigation.
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+    setIsAccountMenuOpen(false);
+    setIsSearchOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    if (!isAccountMenuOpen) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (!accountMenuRef.current?.contains(event.target as Node)) {
+        setIsAccountMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    return () => document.removeEventListener('mousedown', onPointerDown);
+  }, [isAccountMenuOpen]);
 
-  const totalCartItems = mounted ? getTotalItems() : 0;
-  const wishlistCount = mounted ? wishlistItems.length : 0;
+  const topCategories = (categories ?? []).slice(0, 4);
 
   const navLinks = [
     { label: 'HOME', href: '/' },
-    { label: 'ESSENTIAL HOODIE', href: '/product/aesthete-essential-hoodie' },
-    { label: 'COLLECTIONS', href: '/' },
-    { label: 'EDITORIAL', href: '/' },
+    { label: 'SHOP ALL', href: '/products' },
+    ...topCategories.map((category) => ({
+      label: category.name.toUpperCase(),
+      href: `/products?category=${category.category_id}`,
+    })),
   ];
 
   return (
     <>
-      {/* Top Banner */}
-      <div className="bg-primary text-on-primary text-[11px] font-semibold tracking-widest uppercase py-2 text-center px-4">
-        <span>COMPLIMENTARY EXPRESS WORLDWIDE SHIPPING ON ORDERS OVER $250</span>
+      <div className="bg-primary px-4 py-2 text-center text-[11px] font-semibold uppercase tracking-widest text-on-primary">
+        Complimentary express shipping on all orders over ₹500
       </div>
 
-      {/* Main Glass Navigation Header */}
-      <header className="sticky top-0 z-40 glass-nav border-b border-outline-variant/30 transition-all duration-300">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 h-20 flex items-center justify-between">
-          
-          {/* Mobile Menu Button */}
-          <div className="flex items-center gap-4 lg:hidden">
+      <header className="glass-nav sticky top-0 z-40 border-b border-outline-variant/30 transition-all duration-300">
+        <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-between px-4 sm:px-8">
+          <div className="flex items-center gap-2 lg:hidden">
             <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 text-on-surface hover:text-secondary transition-colors"
-              aria-label="Toggle Navigation Menu"
+              onClick={() => setIsMobileMenuOpen((open) => !open)}
+              className="p-2 text-on-surface transition-colors hover:text-secondary"
+              aria-label="Toggle navigation menu"
+              aria-expanded={isMobileMenuOpen}
             >
               <span className="material-symbols-outlined text-2xl">
                 {isMobileMenuOpen ? 'close' : 'menu'}
               </span>
             </button>
-
             <button
-              onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className="p-2 text-on-surface hover:text-secondary transition-colors"
+              onClick={() => setIsSearchOpen((open) => !open)}
+              className="p-2 text-on-surface transition-colors hover:text-secondary"
               aria-label="Search"
             >
               <span className="material-symbols-outlined text-2xl">search</span>
             </button>
           </div>
 
-          {/* Left Desktop Nav Links */}
-          <nav className="hidden lg:flex items-center space-x-8 text-[12px] font-semibold tracking-[0.15em]">
+          <nav className="hidden items-center space-x-6 text-[12px] font-semibold tracking-[0.15em] lg:flex">
             {navLinks.map((link) => {
-              const isActive = pathname === link.href;
+              const isActive = pathname === link.href.split('?')[0];
               return (
                 <Link
-                  key={link.label}
+                  key={link.href}
                   href={link.href}
-                  className={`relative py-1 transition-colors hover:text-secondary-fixed-dim ${
-                    isActive ? 'text-primary font-bold after:content-[""] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-primary' : 'text-on-surface-variant'
-                  }`}
+                  className={cn(
+                    'relative py-1 transition-colors hover:text-secondary-fixed-dim',
+                    isActive
+                      ? 'font-bold text-primary after:absolute after:inset-x-0 after:bottom-0 after:h-[2px] after:bg-primary after:content-[""]'
+                      : 'text-on-surface-variant'
+                  )}
                 >
                   {link.label}
                 </Link>
@@ -79,121 +129,161 @@ export const Navbar: React.FC = () => {
             })}
           </nav>
 
-          {/* Center Brand Logo */}
           <Link href="/" className="group flex flex-col items-center">
-            <span className="font-headline font-extrabold text-2xl sm:text-3xl tracking-tighter text-primary group-hover:opacity-90 transition-opacity">
+            <span className="font-headline text-2xl font-extrabold tracking-tighter text-primary transition-opacity group-hover:opacity-90 sm:text-3xl">
               AESTHETE
             </span>
-            <span className="text-[9px] tracking-[0.3em] font-semibold text-outline uppercase -mt-1">
-              PARIS • NEW YORK
+            <span className="-mt-1 text-[9px] font-semibold uppercase tracking-[0.3em] text-outline">
+              Paris • New York
             </span>
           </Link>
 
-          {/* Right Action Icons */}
-          <div className="flex items-center space-x-3 sm:space-x-5">
-            {/* Desktop Search Button */}
+          <div className="flex items-center space-x-1 sm:space-x-3">
             <button
-              onClick={() => setIsSearchOpen(true)}
-              className="hidden lg:flex items-center gap-2 text-xs font-semibold tracking-wider text-on-surface-variant hover:text-primary transition-colors p-2"
+              onClick={() => setIsSearchOpen((open) => !open)}
+              className="hidden items-center gap-2 p-2 text-xs font-semibold tracking-wider text-on-surface-variant transition-colors hover:text-primary lg:flex"
             >
               <span className="material-symbols-outlined text-2xl">search</span>
-              <span className="hidden xl:inline uppercase">SEARCH</span>
+              <span className="hidden uppercase xl:inline">Search</span>
             </button>
 
-            {/* User Profile Link */}
-            <Link
-              href="/profile"
-              className={`p-2 transition-colors flex items-center gap-1 ${
-                pathname === '/profile' ? 'text-primary' : 'text-on-surface-variant hover:text-primary'
-              }`}
-              title="User Profile & Dashboard"
-            >
-              <span className="material-symbols-outlined text-2xl">account_circle</span>
-            </Link>
+            {isAuthenticated && (
+              <Link
+                href="/account/notifications"
+                className="relative hidden p-2 text-on-surface-variant transition-colors hover:text-primary sm:block"
+                title="Notifications"
+              >
+                <span className="material-symbols-outlined text-2xl">notifications</span>
+                {(unread?.unreadCount ?? 0) > 0 && (
+                  <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 text-[10px] font-bold text-on-error">
+                    {unread!.unreadCount > 9 ? '9+' : unread!.unreadCount}
+                  </span>
+                )}
+              </Link>
+            )}
 
-            {/* Wishlist Link */}
             <Link
-              href="/profile"
-              className="relative p-2 text-on-surface-variant hover:text-primary transition-colors hidden sm:block"
+              href="/account/wishlist"
+              className="relative hidden p-2 text-on-surface-variant transition-colors hover:text-primary sm:block"
               title="Wishlist"
             >
               <span className="material-symbols-outlined text-2xl">favorite</span>
               {wishlistCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-secondary-container text-on-secondary-container font-bold text-[10px] rounded-full flex items-center justify-center">
+                <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-secondary-container text-[10px] font-bold text-on-secondary-container">
                   {wishlistCount}
                 </span>
               )}
             </Link>
 
-            {/* Cart Drawer Trigger Button */}
+            {/* Account menu */}
+            <div className="relative" ref={accountMenuRef}>
+              {isAuthenticated ? (
+                <button
+                  onClick={() => setIsAccountMenuOpen((open) => !open)}
+                  aria-haspopup="menu"
+                  aria-expanded={isAccountMenuOpen}
+                  className="flex items-center gap-2 rounded-full p-1 transition-colors hover:bg-surface-container"
+                >
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-on-primary">
+                    {initials(user?.firstName, user?.lastName)}
+                  </span>
+                  <span className="hidden text-xs font-semibold text-on-surface xl:inline">
+                    {user?.firstName}
+                  </span>
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  className="flex items-center gap-1 p-2 text-on-surface-variant transition-colors hover:text-primary"
+                  title="Sign in"
+                >
+                  <span className="material-symbols-outlined text-2xl">account_circle</span>
+                </Link>
+              )}
+
+              {isAccountMenuOpen && isAuthenticated && (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-full z-50 mt-2 w-60 overflow-hidden rounded-xl border border-outline-variant/40 bg-surface-container-lowest shadow-2xl duration-150 animate-in fade-in slide-in-from-top-2"
+                >
+                  <div className="border-b border-outline-variant/30 bg-surface-container-low px-4 py-3">
+                    <p className="truncate text-sm font-bold text-primary">
+                      {user?.firstName} {user?.lastName}
+                    </p>
+                    <p className="truncate text-xs text-on-surface-variant">{user?.email}</p>
+                    <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-secondary">
+                      {user?.loyaltyTier} • {user?.rewardPoints ?? 0} pts
+                    </p>
+                  </div>
+                  <nav className="py-1">
+                    {ACCOUNT_LINKS.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        role="menuitem"
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface transition-colors hover:bg-surface-container"
+                      >
+                        <span className="material-symbols-outlined text-lg text-outline">
+                          {link.icon}
+                        </span>
+                        {link.label}
+                      </Link>
+                    ))}
+                  </nav>
+                  <button
+                    onClick={logout}
+                    role="menuitem"
+                    className="flex w-full items-center gap-3 border-t border-outline-variant/30 px-4 py-3 text-sm font-semibold text-error transition-colors hover:bg-error-container/40"
+                  >
+                    <span className="material-symbols-outlined text-lg">logout</span>
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+
             <button
               onClick={openDrawer}
-              className="relative p-2.5 bg-primary text-on-primary rounded-full hover:bg-primary-container transition-transform active:scale-95 flex items-center justify-center shadow-sm"
-              aria-label="Open Shopping Bag"
+              className="relative flex items-center justify-center rounded-full bg-primary p-2.5 text-on-primary shadow-sm transition-transform hover:bg-primary-container active:scale-95"
+              aria-label={`Open shopping bag, ${cartCount} items`}
             >
               <span className="material-symbols-outlined text-xl">shopping_bag</span>
-              {totalCartItems > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-secondary-container text-on-secondary-container font-bold text-[10px] rounded-full flex items-center justify-center shadow-md">
-                  {totalCartItems}
+              {cartCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-secondary-container text-[10px] font-bold text-on-secondary-container shadow-md">
+                  {cartCount > 99 ? '99+' : cartCount}
                 </span>
               )}
             </button>
           </div>
-
         </div>
 
-        {/* Expandable Search Drawer / Bar */}
-        {isSearchOpen && (
-          <div className="border-t border-outline-variant/30 bg-surface-container-lowest py-4 px-6 animate-in slide-in-from-top duration-200">
-            <div className="max-w-2xl mx-auto flex items-center gap-3">
-              <span className="material-symbols-outlined text-outline">search</span>
-              <input
-                type="text"
-                placeholder="Search editorial outerwear, hoodies, tailoring..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-transparent text-sm text-on-surface focus:outline-none placeholder:text-outline"
-                autoFocus
-              />
-              <button
-                onClick={() => setIsSearchOpen(false)}
-                className="text-xs font-semibold uppercase tracking-wider text-outline hover:text-primary"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        )}
+        <SearchOverlay open={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
-        {/* Mobile Navigation Drawer */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden border-t border-outline-variant/30 bg-surface-container-lowest px-6 py-6 space-y-4 shadow-xl">
+          <div className="space-y-4 border-t border-outline-variant/30 bg-surface-container-lowest px-6 py-6 shadow-xl lg:hidden">
             {navLinks.map((link) => (
               <Link
-                key={link.label}
+                key={link.href}
                 href={link.href}
-                onClick={() => setIsMobileMenuOpen(false)}
                 className="block text-sm font-semibold tracking-widest text-on-surface hover:text-secondary"
               >
                 {link.label}
               </Link>
             ))}
-            <div className="pt-4 border-t border-outline-variant/20 flex items-center justify-between">
+            <div className="flex items-center justify-between border-t border-outline-variant/20 pt-4">
               <Link
                 href="/cart"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-xs font-semibold tracking-widest text-on-surface flex items-center gap-2"
+                className="flex items-center gap-2 text-xs font-semibold tracking-widest text-on-surface"
               >
                 <span className="material-symbols-outlined text-lg">shopping_bag</span>
-                SHOPPING BAG ({totalCartItems})
+                BAG ({cartCount})
               </Link>
               <Link
-                href="/profile"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-xs font-semibold tracking-widest text-on-surface flex items-center gap-2"
+                href={isAuthenticated ? '/account/orders' : '/login'}
+                className="flex items-center gap-2 text-xs font-semibold tracking-widest text-on-surface"
               >
                 <span className="material-symbols-outlined text-lg">person</span>
-                ACCOUNT
+                {isAuthenticated ? 'ACCOUNT' : 'SIGN IN'}
               </Link>
             </div>
           </div>

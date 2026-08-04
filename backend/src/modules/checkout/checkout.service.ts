@@ -7,12 +7,26 @@ import { NotificationService } from '../notifications/notification.service';
 import { EmailService } from '../../shared/email/email.service';
 import { AuditService } from '../../shared/audit/audit.service';
 import { ApiError } from '../../utils/ApiError';
+import { logger } from '../../config/logger';
 import { formatMoney, generateOrderNumber, calculateDiscount } from '../../common/utils/helpers.util';
-import { CANCELLABLE_ORDER_STATUSES, RETURNABLE_ORDER_STATUSES, RETURN_WINDOW_DAYS, POINTS_PER_RUPEE } from '../../core/constants/customer.constants';
+import {
+  POINT_VALUE_IN_RUPEES,
+  MAX_REDEEM_PERCENT,
+} from '../../core/constants/customer.constants';
 
 const SHIPPING_THRESHOLD = 500;
 const SHIPPING_FEE = 49;
 const TAX_RATE = 0.18;
+
+/** The coupon fields pricing depends on — shared by preview and place-order. */
+interface CouponPricing {
+  coupon_id: number;
+  code: string;
+  discount_type: 'Percentage' | 'Fixed' | 'Free Shipping';
+  discount_value: number;
+  max_discount_amount: number | null;
+  min_order_amount: number | null;
+}
 
 export class CheckoutService {
   private readonly cartRepo: CustomerCartRepository;
@@ -32,7 +46,10 @@ export class CheckoutService {
   }
 
   /**
-   * Idempotent preview — does NOT create order.
+   * Idempotent preview — does NOT create an order.
+   *
+   * Point redemption is clamped to the customer's real balance here too, so
+   * the UI can never display a total the checkout will refuse to honour.
    */
   async previewOrder(userId: number, options: {
     addressId: number;
@@ -47,7 +64,40 @@ export class CheckoutService {
     if (cartItems.length === 0) throw new ApiError(400, 'Your cart is empty.');
     if (!address) throw new ApiError(404, 'Shipping address not found.');
 
-    return this.calculateOrderTotals(cartItems, options.couponCode, options.pointsToRedeem);
+    const points = await this.resolveRedeemablePoints(userId, options.pointsToRedeem);
+    return this.calculateOrderTotals(cartItems, options.couponCode, points);
+  }
+
+  /**
+   * Reject a redemption the customer cannot fund.
+   *
+   * Previously the requested figure was used directly and the balance was only
+   * checked afterwards, in a post-commit setImmediate whose rejection was
+   * swallowed — so any customer could claim the maximum discount with a zero
+   * balance. Validation now happens before anything is priced.
+   */
+  private async resolveRedeemablePoints(
+    userId: number,
+    requested?: number
+  ): Promise<number> {
+    if (!requested || requested <= 0) return 0;
+    if (!Number.isInteger(requested)) {
+      throw new ApiError(400, 'Points to redeem must be a whole number.');
+    }
+
+    const result = await executeQuery(
+      `SELECT points_balance FROM RewardPoints WHERE user_id = @user_id`,
+      { user_id: { type: sql.Int, value: userId } }
+    );
+    const balance: number = result.recordset[0]?.points_balance ?? 0;
+
+    if (requested > balance) {
+      throw new ApiError(
+        400,
+        `Insufficient reward points. You requested ${requested} but have ${balance} available.`
+      );
+    }
+    return requested;
   }
 
   /**
@@ -94,14 +144,25 @@ export class CheckoutService {
           .query(`SELECT p.product_id, p.price, p.sale_price, p.name, p.sku, p.status,
                          i.quantity as stock_quantity
                   FROM Products p WITH (UPDLOCK, ROWLOCK)
-                  LEFT JOIN Inventory i WITH (UPDLOCK) ON p.product_id = i.product_id
+                  INNER JOIN Inventory i WITH (UPDLOCK, ROWLOCK) ON p.product_id = i.product_id
                   WHERE p.product_id = @productId`);
 
         const product = lockResult.recordset[0];
-        if (!product) throw new ApiError(400, `Product '${item.name}' no longer exists.`);
+        // An INNER JOIN means "no row" now covers both a deleted product and a
+        // product with no Inventory record. Previously the LEFT JOIN produced
+        // stock_quantity = null, and `null < quantity` is false in JS, so
+        // unstocked products passed the check and were sold indefinitely.
+        if (!product) {
+          throw new ApiError(400, `Product '${item.name}' is no longer available for purchase.`);
+        }
         if (product.status !== 'Active') throw new ApiError(400, `Product '${item.name}' is unavailable.`);
-        if (product.stock_quantity < item.quantity) {
-          throw new ApiError(400, `Insufficient stock for '${item.name}'. Only ${product.stock_quantity} available.`);
+
+        const stock = Number(product.stock_quantity);
+        if (!Number.isFinite(stock) || stock < item.quantity) {
+          throw new ApiError(
+            400,
+            `Insufficient stock for '${item.name}'. Only ${Number.isFinite(stock) ? stock : 0} available.`
+          );
         }
 
         verifiedItems.push({
@@ -113,28 +174,82 @@ export class CheckoutService {
         });
       }
 
-      const totals = await this.calculateOrderTotals(cartItems, options.couponCode, options.pointsToRedeem);
+      // ─── Reward points: claim inside the transaction ───────────────────────
+      // The balance is read under UPDLOCK and debited here, so the discount and
+      // the deduction either both happen or neither does.
+      let redeemedPoints = 0;
+      if (options.pointsToRedeem && options.pointsToRedeem > 0) {
+        const balanceResult = await transaction.request()
+          .input('user_id', sql.Int, userId)
+          .query(`SELECT points_balance FROM RewardPoints WITH (UPDLOCK, ROWLOCK)
+                  WHERE user_id = @user_id`);
 
-      // Deduct inventory
+        const balance: number = balanceResult.recordset[0]?.points_balance ?? 0;
+        if (options.pointsToRedeem > balance) {
+          throw new ApiError(
+            400,
+            `Insufficient reward points. You requested ${options.pointsToRedeem} but have ${balance} available.`
+          );
+        }
+        redeemedPoints = options.pointsToRedeem;
+      }
+
+      // ─── Coupon: atomic claim ──────────────────────────────────────────────
+      // A single guarded UPDATE both validates and consumes the coupon. Zero
+      // rows affected means it expired or hit its cap between preview and now,
+      // which closes the read-then-increment race.
+      let couponId: number | null = null;
+      let claimedCoupon: any = null;
+      if (options.couponCode) {
+        const claim = await transaction.request()
+          .input('code', sql.VarChar(50), options.couponCode.toUpperCase())
+          .query(`UPDATE Coupons WITH (UPDLOCK, ROWLOCK)
+                  SET used_count = used_count + 1
+                  OUTPUT inserted.coupon_id, inserted.code, inserted.discount_type,
+                         inserted.discount_value, inserted.max_discount_amount,
+                         inserted.min_order_amount
+                  WHERE code = @code
+                    AND is_active = 1
+                    AND expiry_date > GETDATE()
+                    AND (start_date IS NULL OR start_date <= GETDATE())
+                    AND (usage_limit IS NULL OR used_count < usage_limit)`);
+
+        claimedCoupon = claim.recordset[0];
+        if (!claimedCoupon) {
+          throw new ApiError(400, 'This coupon is invalid, expired, or fully redeemed.');
+        }
+        couponId = claimedCoupon.coupon_id;
+      }
+
+      // Totals are computed from the coupon row we actually claimed, not from
+      // a separate unsynchronised read.
+      const totals = this.computeTotals(cartItems, claimedCoupon, redeemedPoints);
+
+      // ─── Deduct inventory, asserting the row count ─────────────────────────
       for (const item of verifiedItems) {
-        await transaction.request()
+        const deduct = await transaction.request()
           .input('productId', sql.Int, item.productId)
           .input('qty', sql.Int, item.quantity)
           .query(`UPDATE Inventory SET quantity = quantity - @qty, updated_at = GETDATE()
                   WHERE product_id = @productId AND quantity >= @qty`);
+
+        // Without this assertion a lost update silently ships unstocked goods.
+        if (!deduct.rowsAffected[0]) {
+          throw new ApiError(400, `Insufficient stock for '${item.name}'. Please review your cart.`);
+        }
       }
 
-      // Resolve coupon ID
-      let couponId: number | null = null;
-      if (options.couponCode) {
-        const couponResult = await transaction.request()
-          .input('code', sql.VarChar(50), options.couponCode)
-          .query(`SELECT coupon_id FROM Coupons WHERE code = @code`);
-        couponId = couponResult.recordset[0]?.coupon_id || null;
-        if (couponId) {
-          await transaction.request()
-            .input('coupon_id', sql.Int, couponId)
-            .query(`UPDATE Coupons SET used_count = used_count + 1 WHERE coupon_id = @coupon_id`);
+      // ─── Debit reward points ───────────────────────────────────────────────
+      if (redeemedPoints > 0) {
+        const debit = await transaction.request()
+          .input('user_id', sql.Int, userId)
+          .input('points', sql.Int, redeemedPoints)
+          .query(`UPDATE RewardPoints SET points_balance = points_balance - @points,
+                         updated_at = GETDATE()
+                  WHERE user_id = @user_id AND points_balance >= @points`);
+
+        if (!debit.rowsAffected[0]) {
+          throw new ApiError(400, 'Insufficient reward points balance.');
         }
       }
 
@@ -187,25 +302,56 @@ export class CheckoutService {
         .input('status', sql.VarChar(30), 'Pending')
         .query(`INSERT INTO OrderStatusHistory (order_id, status, changed_at) VALUES (@order_id, @status, GETDATE())`);
 
+      // ─── Per-customer coupon ledger ────────────────────────────────────────
+      // UQ_CouponRedemptions_Coupon_User enforces one redemption per customer
+      // at the database level, which no amount of concurrency can bypass.
+      if (couponId) {
+        try {
+          await transaction.request()
+            .input('coupon_id', sql.Int, couponId)
+            .input('user_id', sql.Int, userId)
+            .input('order_id', sql.Int, orderId)
+            .query(`INSERT INTO CouponRedemptions (coupon_id, user_id, order_id, redeemed_at)
+                    VALUES (@coupon_id, @user_id, @order_id, GETDATE())`);
+        } catch (err: any) {
+          // 2627/2601 = unique constraint violation.
+          if (err?.number === 2627 || err?.number === 2601) {
+            throw new ApiError(400, 'You have already used this coupon.');
+          }
+          throw err;
+        }
+      }
+
+      // ─── Reward-point ledger entry (balance was debited above) ─────────────
+      if (redeemedPoints > 0) {
+        await transaction.request()
+          .input('user_id', sql.Int, userId)
+          .input('points', sql.Int, -redeemedPoints)
+          .input('description', sql.NVarChar(255), `Points redeemed for order ${orderNumber}`)
+          .input('reference_id', sql.Int, orderId)
+          .query(`INSERT INTO RewardPointsHistory
+                    (user_id, points, type, description, reference_id, reference_type, created_at)
+                  VALUES (@user_id, @points, 'redeemed', @description, @reference_id, 'order', GETDATE())`);
+      }
+
       // Clear cart
       await this.cartRepo.clearCart(userId, transaction);
 
-      // Post-transaction async tasks (non-blocking)
+      // ─── Post-commit side effects ──────────────────────────────────────────
+      // Notifications and email only. Nothing here changes financial state:
+      // every balance, stock level and coupon count was settled inside the
+      // transaction above, so a failure at this point cannot leave the order
+      // in an inconsistent or under-charged state.
       setImmediate(async () => {
         try {
-          // Award loyalty points
           await this.loyaltyService.awardOrderPoints(userId, orderId, totals.total);
 
-          // Deduct redeemed points if any
-          if (options.pointsToRedeem && options.pointsToRedeem > 0) {
-            const loyaltyRepo = new (await import('../loyalty/loyalty.repository')).LoyaltyRepository();
-            await loyaltyRepo.redeemPoints(userId, options.pointsToRedeem, `Points redeemed for order #${orderId}`, orderId);
-          }
+          this.emailService
+            .sendOrderConfirmation(userEmail, userName, orderNumber, totals.total)
+            .catch((err: Error) =>
+              logger.warn(`[Checkout] Order confirmation email failed: ${err.message}`)
+            );
 
-          // Send confirmation email
-          this.emailService.sendOrderConfirmation(userEmail, userName, orderNumber, totals.total).catch(() => {});
-
-          // Send in-app notification
           await this.notificationService.createNotification(userId, {
             type: 'order_placed',
             title: 'Order Placed Successfully! 🎉',
@@ -213,16 +359,22 @@ export class CheckoutService {
             referenceId: orderId,
           });
 
-          // Audit log
           await this.auditService.log({
             userId,
             action: 'order_placed',
             module: 'checkout',
             recordId: orderId,
-            newValues: { orderNumber, total: totals.total },
+            newValues: {
+              orderNumber,
+              total: totals.total,
+              couponId,
+              pointsRedeemed: redeemedPoints,
+            },
           });
         } catch (err: any) {
-          console.error('[Checkout Post-Order] Error:', err.message);
+          logger.error(
+            `[Checkout] Post-order side effects failed for order ${orderId}: ${err.message}`
+          );
         }
       });
 
@@ -230,46 +382,94 @@ export class CheckoutService {
     });
   }
 
+  /**
+   * Preview pricing. Reads the coupon without consuming it; placeOrder uses
+   * computeTotals() against the coupon row it atomically claimed, so the two
+   * paths share one pricing implementation and cannot drift.
+   */
   private async calculateOrderTotals(
     cartItems: any[],
     couponCode?: string,
     pointsToRedeem?: number
+  ) {
+    let coupon: CouponPricing | null = null;
+
+    if (couponCode) {
+      const couponResult = await executeQuery(
+        `SELECT coupon_id, code, discount_type, discount_value, max_discount_amount, min_order_amount
+         FROM Coupons WHERE code = @code AND is_active = 1 AND expiry_date > GETDATE()
+         AND (usage_limit IS NULL OR used_count < usage_limit)
+         AND (start_date IS NULL OR start_date <= GETDATE())`,
+        { code: { type: sql.VarChar(50), value: couponCode.toUpperCase() } }
+      );
+      coupon = couponResult.recordset[0] || null;
+      if (!coupon) throw new ApiError(400, 'Invalid or expired coupon code.');
+    }
+
+    return this.computeTotals(cartItems, coupon, pointsToRedeem ?? 0);
+  }
+
+  /**
+   * Single source of truth for order pricing. Pure — no I/O — so the numbers
+   * quoted at preview are produced by exactly the same code that prices the
+   * committed order.
+   *
+   * Prices always come from the joined product row, never from the client.
+   */
+  private computeTotals(
+    cartItems: any[],
+    coupon: CouponPricing | null,
+    pointsToRedeem: number
   ) {
     const subtotal = formatMoney(
       cartItems.reduce((sum, item) => sum + (item.sale_price ?? item.price) * item.quantity, 0)
     );
 
     let couponDiscount = 0;
-    let appliedCoupon = null;
-    if (couponCode) {
-      const couponResult = await executeQuery(
-        `SELECT * FROM Coupons WHERE code = @code AND is_active = 1 AND expiry_date > GETDATE()
-         AND (usage_limit IS NULL OR used_count < usage_limit)
-         AND (start_date IS NULL OR start_date <= GETDATE())`,
-        { code: { type: sql.VarChar(50), value: couponCode.toUpperCase() } }
-      );
-      const coupon = couponResult.recordset[0];
-      if (!coupon) throw new ApiError(400, 'Invalid or expired coupon code.');
-      if (subtotal < coupon.min_order_amount) {
-        throw new ApiError(400, `Minimum order amount for this coupon is ₹${coupon.min_order_amount}.`);
+    let appliedCoupon: { code: string; discount: number } | null = null;
+
+    if (coupon) {
+      if (subtotal < Number(coupon.min_order_amount ?? 0)) {
+        throw new ApiError(
+          400,
+          `Minimum order amount for this coupon is ₹${coupon.min_order_amount}.`
+        );
       }
-      couponDiscount = calculateDiscount(subtotal, coupon.discount_type, coupon.discount_value, coupon.max_discount_amount);
+      couponDiscount = calculateDiscount(
+        subtotal,
+        coupon.discount_type,
+        Number(coupon.discount_value),
+        coupon.max_discount_amount === null ? null : Number(coupon.max_discount_amount)
+      );
       appliedCoupon = { code: coupon.code, discount: couponDiscount };
     }
 
+    // Point value is capped at MAX_REDEEM_PERCENT of subtotal. The caller is
+    // responsible for having verified the customer holds these points.
     let pointsDiscount = 0;
-    if (pointsToRedeem && pointsToRedeem > 0) {
-      const { POINT_VALUE_IN_RUPEES, MAX_REDEEM_PERCENT } = await import('../../core/constants/customer.constants');
+    if (pointsToRedeem > 0) {
       const maxDiscount = subtotal * MAX_REDEEM_PERCENT;
-      pointsDiscount = Math.min(pointsToRedeem * POINT_VALUE_IN_RUPEES, maxDiscount);
+      pointsDiscount = formatMoney(Math.min(pointsToRedeem * POINT_VALUE_IN_RUPEES, maxDiscount));
     }
 
-    const discount = formatMoney(couponDiscount + pointsDiscount);
-    const subtotalAfterDiscount = formatMoney(subtotal - discount);
+    // Discounts can never exceed the subtotal, so a total can never go
+    // negative and a refund can never exceed what was charged.
+    const discount = formatMoney(Math.min(couponDiscount + pointsDiscount, subtotal));
+    const subtotalAfterDiscount = formatMoney(Math.max(subtotal - discount, 0));
     const shippingFee = subtotalAfterDiscount >= SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
     const tax = formatMoney(subtotalAfterDiscount * TAX_RATE);
     const total = formatMoney(subtotalAfterDiscount + shippingFee + tax);
 
-    return { subtotal, discount, couponDiscount, pointsDiscount, shippingFee, tax, total, appliedCoupon };
+    return {
+      subtotal,
+      discount,
+      couponDiscount,
+      pointsDiscount,
+      pointsRedeemed: pointsToRedeem,
+      shippingFee,
+      tax,
+      total,
+      appliedCoupon,
+    };
   }
 }

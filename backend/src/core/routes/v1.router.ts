@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { requestIdMiddleware } from '../../common/middleware/requestId.middleware';
 import { customerApiRateLimiter } from '../../common/middleware/rateLimiter.middleware';
 
 import authRoutes from '../../modules/authentication/customer.auth.routes';
@@ -23,8 +22,8 @@ import referralRoutes from '../../modules/referrals/customer.referral.routes';
 
 const v1CustomerRouter = Router();
 
-// Apply request tracking ID & rate limiter to all v1 customer routes
-v1CustomerRouter.use(requestIdMiddleware);
+// requestIdMiddleware is applied globally in app.ts; the customer tree adds
+// its own tighter rate limit on top of the global one.
 v1CustomerRouter.use(customerApiRateLimiter);
 
 // Module Router Mounts — strictly namespaced under /api/v1/customer/*

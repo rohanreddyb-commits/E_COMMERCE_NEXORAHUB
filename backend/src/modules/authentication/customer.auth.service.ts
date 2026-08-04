@@ -20,7 +20,7 @@ import {
   generateOTP,
   hashToken,
   generateSecureToken,
-  verifyTokenHash,
+  constantTimeEquals,
 } from '../../common/utils/crypto.util';
 import {
   ACCESS_TOKEN_EXPIRY,
@@ -28,9 +28,32 @@ import {
   OTP_EXPIRY_MINUTES,
   MAX_LOGIN_ATTEMPTS,
   ACCOUNT_LOCK_DURATION_MINUTES,
+  BCRYPT_COST,
+  GENERIC_LOGIN_FAILURE,
+  MAX_OTP_ATTEMPTS,
 } from '../../core/constants/customer.constants';
 
-const CUSTOMER_ROLE_ID = 3; // Customer role in Roles table
+/**
+ * A syntactically valid bcrypt hash that matches nothing. Compared against
+ * when the email is unknown so the "no such user" path costs roughly the same
+ * as a real verification and cannot be distinguished by response time.
+ */
+const DUMMY_BCRYPT_HASH = '$2b$12$C6UzMDM.H6dfI/f/IKcEe.6.HFHhBnEjKGZ4nBcXfvTPMwvVLLnLa';
+
+const CUSTOMER_ROLE_NAME = 'Customer';
+
+/**
+ * Convert a jsonwebtoken expiry string ("15m", "24h", "7d", "900") to seconds
+ * so the client is told the token's real lifetime.
+ */
+export const parseExpiryToSeconds = (expiry: string): number => {
+  const match = /^(\d+)\s*([smhd])?$/.exec(String(expiry).trim());
+  if (!match) return 15 * 60;
+  const value = parseInt(match[1], 10);
+  const unit = match[2] ?? 's';
+  const multiplier = { s: 1, m: 60, h: 3600, d: 86400 }[unit] ?? 1;
+  return value * multiplier;
+};
 
 export class CustomerAuthService {
   private readonly userRepo: UserRepository;
@@ -55,7 +78,15 @@ export class CustomerAuthService {
       throw new ApiError(409, 'An account with this email already exists.');
     }
 
-    const passwordHash = await bcrypt.hash(dto.password, 12);
+    // Resolved by name — Roles.role_id is an IDENTITY column, so its numeric
+    // value is not a contract that application code should hardcode.
+    const customerRole = await this.userRepo.findRoleByName(CUSTOMER_ROLE_NAME);
+    if (!customerRole) {
+      logger.error(`[Auth] Role '${CUSTOMER_ROLE_NAME}' is missing from the Roles table.`);
+      throw new ApiError(500, 'Registration is temporarily unavailable.');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_COST);
     const newUser = await this.userRepo.createUser(
       {
         first_name: dto.first_name,
@@ -65,7 +96,7 @@ export class CustomerAuthService {
         phone: dto.phone,
         status: 'Active',
       },
-      CUSTOMER_ROLE_ID
+      customerRole.role_id
     );
 
     // Initialize loyalty account
@@ -81,6 +112,22 @@ export class CustomerAuthService {
     this.emailService.sendEmailVerification(dto.email, dto.first_name, otp).catch((err) => {
       logger.warn(`[Auth] Failed to send verification email: ${err.message}`);
     });
+
+    // Apply a referral code if one was supplied. processReferralCode rejects
+    // self-referral and unknown codes; it was previously never invoked, so the
+    // referral programme silently did nothing.
+    if (dto.referralCode) {
+      try {
+        const { CustomerReferralService } = await import('../referrals/customer.referral.service');
+        await new CustomerReferralService().processReferralCode(
+          newUser.user_id,
+          dto.referralCode
+        );
+      } catch (err: any) {
+        // A bad referral code must not fail an otherwise valid registration.
+        logger.warn(`[Auth] Referral code processing failed: ${err.message}`);
+      }
+    }
 
     await this.auditService.log({
       userId: newUser.user_id,
@@ -103,42 +150,63 @@ export class CustomerAuthService {
     userAgent: string
   ): Promise<AuthResponse> {
     const user = await this.userRepo.findByEmail(dto.email);
+
+    // Every failure below returns the same message and status. Previously the
+    // response distinguished "unknown email" (generic) from "wrong password"
+    // (which disclosed the remaining-attempt count) and from locked/inactive
+    // states, giving an account-existence oracle and letting an attacker pace
+    // a password spray to stay just under the lockout threshold.
     if (!user) {
-      throw new ApiError(401, 'Invalid email or password.');
+      // Spend comparable time to a real bcrypt compare so response timing does
+      // not become the next oracle.
+      await bcrypt.compare(dto.password, DUMMY_BCRYPT_HASH);
+      logger.warn(`[Auth] Login attempt for unknown email from IP ${ipAddress}`);
+      throw new ApiError(401, GENERIC_LOGIN_FAILURE);
     }
 
-    // Check account lock
     const isLocked = await this.authRepo.isAccountLocked(user.user_id);
     if (isLocked) {
-      throw new ApiError(
-        403,
-        'Your account is temporarily locked due to multiple failed login attempts. Please try again later.'
-      );
+      await this.authRepo.recordLoginAttempt(user.user_id, ipAddress, userAgent, false);
+      logger.warn(`[Auth] Login attempt on locked account user_id=${user.user_id} from IP ${ipAddress}`);
+      throw new ApiError(401, GENERIC_LOGIN_FAILURE);
     }
 
     if (user.status !== 'Active') {
-      throw new ApiError(403, 'Your account is not active. Please contact support.');
+      await this.authRepo.recordLoginAttempt(user.user_id, ipAddress, userAgent, false);
+      logger.warn(
+        `[Auth] Login attempt on ${user.status} account user_id=${user.user_id} from IP ${ipAddress}`
+      );
+      throw new ApiError(401, GENERIC_LOGIN_FAILURE);
     }
 
     const isPasswordValid = await bcrypt.compare(dto.password, user.password_hash);
     if (!isPasswordValid) {
-      // Track failed attempt
       await this.authRepo.recordLoginAttempt(user.user_id, ipAddress, userAgent, false);
       const failedCount = await this.authRepo.countRecentFailedAttempts(user.user_id, 30);
 
       if (failedCount >= MAX_LOGIN_ATTEMPTS) {
         const lockedUntil = new Date(Date.now() + ACCOUNT_LOCK_DURATION_MINUTES * 60 * 1000);
         await this.authRepo.lockAccount(user.user_id, lockedUntil);
-        throw new ApiError(
-          403,
-          `Account locked due to ${MAX_LOGIN_ATTEMPTS} failed attempts. Try again in ${ACCOUNT_LOCK_DURATION_MINUTES} minutes.`
-        );
+        await this.auditService.log({
+          userId: user.user_id,
+          action: 'account_locked',
+          module: 'authentication',
+          ipAddress,
+          newValues: { reason: 'max_failed_login_attempts', failedCount },
+        });
+        logger.warn(`[Auth] Account locked user_id=${user.user_id} after ${failedCount} failures`);
       }
 
-      const remaining = MAX_LOGIN_ATTEMPTS - failedCount;
+      throw new ApiError(401, GENERIC_LOGIN_FAILURE);
+    }
+
+    // Unverified accounts may exist on an address the owner does not control,
+    // so they must not be able to transact.
+    if (!(user as any).is_email_verified) {
+      await this.authRepo.recordLoginAttempt(user.user_id, ipAddress, userAgent, false);
       throw new ApiError(
-        401,
-        `Invalid email or password. ${remaining} attempt(s) remaining.`
+        403,
+        'Please verify your email address before signing in. Check your inbox for the verification code.'
       );
     }
 
@@ -257,20 +325,39 @@ export class CustomerAuthService {
 
   // ─── Verify OTP ───────────────────────────────────────────────────────────
 
+  /**
+   * Verify a 6-digit OTP.
+   *
+   * IP rate limiting alone leaves only a million-guess keyspace open to a
+   * distributed attacker, so each OTP record also carries its own attempt
+   * counter and is destroyed after MAX_OTP_ATTEMPTS wrong guesses. Comparison
+   * is constant-time to avoid leaking a prefix match.
+   */
   async verifyOtp(
     email: string,
     otp: string,
     type: 'password_reset' | 'email_verify'
   ): Promise<{ token?: string; message: string }> {
     const user = await this.userRepo.findByEmail(email);
-    if (!user) throw new ApiError(400, 'Invalid request.');
+    // Uniform message — do not reveal whether the address is registered.
+    const invalid = () => new ApiError(400, 'Invalid or expired OTP.');
+    if (!user) throw invalid();
 
     const otpHash = hashToken(otp);
 
     if (type === 'password_reset') {
       const record = await this.authRepo.findPasswordReset(user.user_id);
-      if (!record || record.otp_hash !== otpHash) {
-        throw new ApiError(400, 'Invalid or expired OTP.');
+      if (!record) throw invalid();
+
+      if (!constantTimeEquals(record.otp_hash, otpHash)) {
+        const attempts = await this.authRepo.incrementPasswordResetAttempts(user.user_id);
+        if (attempts >= MAX_OTP_ATTEMPTS) {
+          await this.authRepo.markPasswordResetUsed(user.user_id);
+          logger.warn(
+            `[Auth] Password-reset OTP invalidated for user_id=${user.user_id} after ${attempts} failed attempts`
+          );
+        }
+        throw invalid();
       }
 
       const resetToken = generateSecureToken(32);
@@ -281,14 +368,24 @@ export class CustomerAuthService {
         token: resetToken,
         message: 'OTP verified. Use the token to reset your password.',
       };
-    } else {
-      const record = await this.authRepo.findEmailVerification(user.user_id);
-      if (!record || record.otp_hash !== otpHash) {
-        throw new ApiError(400, 'Invalid or expired OTP.');
-      }
-      await this.authRepo.markEmailVerified(user.user_id);
-      return { message: 'Email verified successfully.' };
     }
+
+    const record = await this.authRepo.findEmailVerification(user.user_id);
+    if (!record) throw invalid();
+
+    if (!constantTimeEquals(record.otp_hash, otpHash)) {
+      const attempts = await this.authRepo.incrementEmailVerificationAttempts(user.user_id);
+      if (attempts >= MAX_OTP_ATTEMPTS) {
+        await this.authRepo.expireEmailVerification(user.user_id);
+        logger.warn(
+          `[Auth] Email-verification OTP invalidated for user_id=${user.user_id} after ${attempts} failed attempts`
+        );
+      }
+      throw invalid();
+    }
+
+    await this.authRepo.markEmailVerified(user.user_id);
+    return { message: 'Email verified successfully.' };
   }
 
   // ─── Reset Password ───────────────────────────────────────────────────────
@@ -405,16 +502,23 @@ export class CustomerAuthService {
       sessionId,
     };
 
-    const accessToken = jwt.sign(payload, env.JWT_SECRET, {
-      expiresIn: env.JWT_EXPIRY || ACCESS_TOKEN_EXPIRY,
-    } as jwt.SignOptions);
+    // typ + audience + issuer pin this token to the customer realm. It is
+    // signed with JWT_SECRET; admin tokens use the separate JWT_ADMIN_SECRET,
+    // so neither realm's tokens are interchangeable.
+    const accessToken = jwt.sign({ ...payload, typ: 'customer' }, env.JWT_SECRET, {
+      expiresIn: (env.JWT_EXPIRY || ACCESS_TOKEN_EXPIRY) as jwt.SignOptions['expiresIn'],
+      issuer: env.JWT_ISSUER,
+      audience: env.JWT_AUDIENCE_CUSTOMER,
+    });
 
     const refreshToken = generateSecureToken(48);
 
     return {
       accessToken,
       refreshToken,
-      expiresIn: 15 * 60, // 15 minutes in seconds
+      // Report the real configured lifetime rather than a hardcoded 15 min, so
+      // the client's refresh scheduling matches the token it actually holds.
+      expiresIn: parseExpiryToSeconds(env.JWT_EXPIRY || ACCESS_TOKEN_EXPIRY),
     };
   }
 }

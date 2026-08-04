@@ -3,7 +3,7 @@ import { ProductController } from '../controllers/product.controller';
 import { asyncHandler } from '../utils/asyncHandler';
 import { authenticate } from '../middlewares/auth.middleware';
 import { authorizeRole } from '../middlewares/rbac.middleware';
-import { upload } from '../middleware/upload';
+import { upload, verifyUploadedImages } from '../middleware/upload';
 
 const router = Router();
 const productController = new ProductController();
@@ -46,9 +46,26 @@ router.get('/:id', asyncHandler(productController.getProductById));
 // ─── Admin: product CRUD (wildcard /:id routes) ───────────────────────────────
 router.use(authenticate, authorizeRole(['Admin', 'Super Admin', 'Inventory Manager']));
 
-router.post('/', upload.array('images', 5), asyncHandler(productController.createProduct));
-router.post('/with-variants', upload.array('images', 5), asyncHandler(productController.createProductWithVariants));
-router.put('/:id', upload.array('images', 5), asyncHandler(productController.updateProduct));
+// verifyUploadedImages inspects the bytes actually written and deletes
+// anything that is not a genuine image of the declared type.
+router.post(
+  '/',
+  upload.array('images', 5),
+  verifyUploadedImages,
+  asyncHandler(productController.createProduct)
+);
+router.post(
+  '/with-variants',
+  upload.array('images', 5),
+  verifyUploadedImages,
+  asyncHandler(productController.createProductWithVariants)
+);
+router.put(
+  '/:id',
+  upload.array('images', 5),
+  verifyUploadedImages,
+  asyncHandler(productController.updateProduct)
+);
 router.delete('/:id', asyncHandler(productController.deleteProduct));
 
 export default router;

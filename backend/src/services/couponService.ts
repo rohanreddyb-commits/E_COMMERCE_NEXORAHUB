@@ -2,39 +2,59 @@ import { CouponRepository, CouponDB } from "../repositories/couponRepository";
 import { NotFoundError, BadRequestError } from "../utils/customError";
 
 export class CouponService {
+  /**
+   * Quote a coupon without consuming it.
+   *
+   * This must apply exactly the same predicates as the atomic claim in
+   * CheckoutService.placeOrder — start_date, usage_limit and
+   * max_discount_amount included. Quoting a discount the checkout will then
+   * refuse (or, worse, a larger one than it grants) is both a support burden
+   * and a pricing-integrity problem.
+   *
+   * Uniform error messages avoid disclosing whether a guessed code exists.
+   */
   static async validateCoupon(
     code: string,
     orderAmount: number
   ): Promise<CouponDB & { calculatedDiscount: number }> {
     const coupon = await CouponRepository.getCouponByCode(code.toUpperCase());
-    
-    if (!coupon) {
-      throw new NotFoundError("Coupon code not found.");
-    }
 
-    if (!coupon.is_active) {
-      throw new BadRequestError("This coupon is no longer active.");
-    }
+    const invalid = () => new BadRequestError("This coupon is invalid, expired, or fully redeemed.");
 
-    // Verify expiry date
+    if (!coupon) throw invalid();
+    if (!coupon.is_active) throw invalid();
+
     const now = new Date();
-    if (new Date(coupon.expiry_date) < now) {
-      throw new BadRequestError("This coupon has expired.");
+    if (new Date(coupon.expiry_date) < now) throw invalid();
+
+    // Not yet started.
+    const startDate = (coupon as any).start_date;
+    if (startDate && new Date(startDate) > now) throw invalid();
+
+    // Global redemption cap — previously ignored here, so an exhausted coupon
+    // still quoted a discount.
+    const usageLimit = (coupon as any).usage_limit;
+    const usedCount = (coupon as any).used_count ?? 0;
+    if (usageLimit !== null && usageLimit !== undefined && usedCount >= usageLimit) {
+      throw invalid();
     }
 
-    // Verify minimum order amount
+    // Minimum spend is a legitimate, non-sensitive constraint to disclose.
     if (orderAmount < coupon.min_order_amount) {
       throw new BadRequestError(
-        `This coupon requires a minimum purchase of ₹${coupon.min_order_amount.toFixed(2)}. Your cart total is ₹${orderAmount.toFixed(
-          2
-        )}.`
+        `This coupon requires a minimum purchase of ₹${Number(coupon.min_order_amount).toFixed(2)}.`
       );
     }
 
-    // Calculate coupon value
     let calculatedDiscount = 0;
     if (coupon.discount_type === "Percentage") {
       calculatedDiscount = Number(((coupon.discount_value / 100) * orderAmount).toFixed(2));
+      // max_discount_amount was not applied here, so a percentage coupon could
+      // be quoted above its own cap.
+      const cap = (coupon as any).max_discount_amount;
+      if (cap !== null && cap !== undefined && calculatedDiscount > Number(cap)) {
+        calculatedDiscount = Number(Number(cap).toFixed(2));
+      }
     } else {
       // Fixed amount discount cannot exceed the order amount itself
       calculatedDiscount = Math.min(Number(coupon.discount_value), orderAmount);

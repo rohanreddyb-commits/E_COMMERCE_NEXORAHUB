@@ -1,307 +1,413 @@
 'use client';
 
-import React, { useState, use } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { MOCK_PRODUCTS } from '@/data/mockData';
+import { useParams, useRouter } from 'next/navigation';
+import { productService, recommendationService } from '@/services';
+import { useApiResource } from '@/hooks/useApiResource';
 import { useCartStore } from '@/store/useCartStore';
 import { useWishlistStore } from '@/store/useWishlistStore';
+import { useToast } from '@/context/ToastContext';
+import { getImageUrl, formatCurrency, effectivePrice, stockLabel } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { AccordionItem } from '@/components/ui/Accordion';
-import { ProductCard } from '@/components/ui/ProductCard';
+import { Badge, Button, Price, StarRating } from '@/components/ui/Primitives';
+import { ErrorState, Skeleton } from '@/components/ui/Feedback';
+import { ProductSection } from '@/components/product/ProductSection';
+import { ProductReviews } from '@/components/product/ProductReviews';
 
-interface PageProps {
-  params: Promise<{ id: string }>;
-}
+const STOCK_TONE = {
+  in: 'text-secondary',
+  low: 'text-amber-600',
+  out: 'text-error',
+} as const;
 
-export default function ProductDetailPage({ params }: PageProps) {
-  const resolvedParams = use(params);
-  const productId = resolvedParams.id;
+const ProductSkeleton: React.FC = () => (
+  <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-12 px-4 py-12 sm:px-8 lg:grid-cols-2">
+    <Skeleton className="aspect-[4/5] w-full rounded-2xl" />
+    <div className="space-y-4 py-6">
+      <Skeleton className="h-3 w-24" />
+      <Skeleton className="h-10 w-4/5" />
+      <Skeleton className="h-4 w-1/3" />
+      <Skeleton className="h-8 w-32" />
+      <Skeleton className="h-24 w-full" />
+      <Skeleton className="h-14 w-full rounded-md" />
+    </div>
+  </div>
+);
 
-  // Find product by id or slug or fallback to default hoodie
-  const product = MOCK_PRODUCTS.find(
-    (p) => p.id === productId || p.slug === productId
-  ) || MOCK_PRODUCTS[0];
+export default function ProductDetailPage() {
+  const params = useParams<{ id: string }>();
+  const router = useRouter();
+  const toast = useToast();
 
-  const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedColor, setSelectedColor] = useState(product.colors[0]);
-  const [selectedSize, setSelectedSize] = useState(product.sizes[2] || product.sizes[0]);
+  const productId = Number(params.id);
+  const isValidId = Number.isFinite(productId) && productId > 0;
+
+  const addItem = useCartStore((s) => s.addItem);
+  const toggleWishlist = useWishlistStore((s) => s.toggle);
+  const isWishlisted = useWishlistStore(
+    (s) => s.hydrated && s.getLines().some((line) => line.productId === productId)
+  );
+
   const [quantity, setQuantity] = useState(1);
-  const [isAddedSuccess, setIsAddedSuccess] = useState(false);
-  const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
+  const [activeImage, setActiveImage] = useState(0);
+  const [adding, setAdding] = useState(false);
 
-  const { addItem } = useCartStore();
-  const { toggleWishlist, isInWishlist } = useWishlistStore();
-  const isWishlisted = isInWishlist(product.id);
+  const product = useApiResource(
+    (signal) => productService.detail(productId, signal),
+    [productId],
+    { enabled: isValidId }
+  );
 
-  const handleAddToCart = () => {
-    addItem(product, selectedColor, selectedSize, quantity);
-    setIsAddedSuccess(true);
-    setTimeout(() => setIsAddedSuccess(false), 2500);
+  const related = useApiResource(
+    (signal) => productService.related(productId, signal),
+    [productId],
+    { enabled: isValidId }
+  );
+
+  const alsoBought = useApiResource(
+    (signal) => recommendationService.frequentlyBoughtTogether(productId, signal),
+    [productId],
+    { enabled: isValidId }
+  );
+
+  if (!isValidId) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-24">
+        <ErrorState
+          title="Product not found"
+          message="That product link looks malformed."
+          onRetry={() => router.push('/products')}
+        />
+      </div>
+    );
+  }
+
+  if (product.loading) return <ProductSkeleton />;
+
+  if (product.error || !product.data) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-24">
+        <ErrorState
+          title="Product unavailable"
+          message={product.error ?? 'This product could not be found or is no longer for sale.'}
+          onRetry={product.reload}
+        />
+        <div className="mt-6 text-center">
+          <Link
+            href="/products"
+            className="text-xs font-bold uppercase tracking-widest text-primary underline"
+          >
+            Back to all products
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const item = product.data;
+  const gallery = item.images?.length
+    ? item.images.map((image) => image.image_url)
+    : [item.primary_image ?? null];
+
+  const stock = stockLabel(item.stock_quantity);
+  const outOfStock = stock.tone === 'out';
+  const maxQuantity = Math.max(1, Math.min(item.stock_quantity ?? 1, 10));
+  const unitPrice = effectivePrice(item.price, item.sale_price);
+
+  const cartPayload = {
+    product_id: item.product_id,
+    name: item.name,
+    slug: item.slug,
+    price: item.price,
+    sale_price: item.sale_price,
+    primary_image: gallery[0] ?? null,
+    brand_name: item.brand_name,
+    stock_quantity: item.stock_quantity,
   };
 
-  const relatedProducts = MOCK_PRODUCTS.filter((p) => p.id !== product.id);
+  const handleAddToCart = async (): Promise<boolean> => {
+    if (outOfStock) return false;
+    setAdding(true);
+    try {
+      await addItem(cartPayload, quantity);
+      toast.success(`${item.name} added to your bag.`);
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not add to bag.');
+      return false;
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const handleWishlist = async () => {
+    try {
+      const saved = await toggleWishlist(cartPayload);
+      toast.success(saved ? 'Saved to your wishlist.' : 'Removed from your wishlist.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not update your wishlist.');
+    }
+  };
+
+  // Only advance to checkout if the item actually made it into the bag.
+  const buyNow = async () => {
+    if (await handleAddToCart()) router.push('/checkout');
+  };
 
   return (
-    <div className="max-w-[1440px] mx-auto px-4 sm:px-8 py-8 space-y-16">
-      
-      {/* Breadcrumbs */}
-      <nav className="flex items-center space-x-2 text-xs font-semibold text-outline uppercase tracking-wider">
-        <Link href="/" className="hover:text-primary transition-colors">Home</Link>
-        <span>/</span>
-        <Link href="/" className="hover:text-primary transition-colors">{product.category}</Link>
-        <span>/</span>
-        <span className="text-primary font-bold">{product.name}</span>
-      </nav>
+    <div className="pb-20">
+      <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-8">
+        <nav aria-label="Breadcrumb" className="text-xs text-outline">
+          <Link href="/" className="hover:text-primary">
+            Home
+          </Link>
+          <span className="mx-2">/</span>
+          <Link href="/products" className="hover:text-primary">
+            Shop
+          </Link>
+          {item.category_name && (
+            <>
+              <span className="mx-2">/</span>
+              <span className="text-on-surface-variant">{item.category_name}</span>
+            </>
+          )}
+        </nav>
+      </div>
 
-      {/* Main Product Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-        
-        {/* Left Column: Multi-Angle Gallery Grid */}
-        <div className="lg:col-span-7 space-y-4">
-          {/* Main Large Image */}
-          <div className="relative aspect-[3/4] w-full bg-surface-container rounded-2xl overflow-hidden border border-outline-variant/30 shadow-sm">
+      <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-10 px-4 sm:px-8 lg:grid-cols-2 lg:gap-16">
+        {/* Gallery */}
+        <div className="space-y-4">
+          <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-surface-container">
             <Image
-              src={product.images[selectedImage] || product.images[0]}
-              alt={`${product.name} View ${selectedImage + 1}`}
+              src={getImageUrl(gallery[activeImage])}
+              alt={`${item.name} — view ${activeImage + 1}`}
               fill
               priority
-              className="object-cover transition-opacity duration-300"
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover"
             />
-            {product.badge && (
-              <span className="absolute top-4 left-4 px-3 py-1 bg-primary text-on-primary font-extrabold text-[10px] uppercase tracking-widest rounded-md shadow-md">
-                {product.badge}
+            {(item.discount_percent ?? 0) > 0 && (
+              <span className="absolute left-4 top-4 rounded-md bg-secondary-container px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-widest text-on-secondary-container">
+                {item.discount_percent}% Off
               </span>
             )}
           </div>
 
-          {/* Thumbnail Strip */}
-          <div className="grid grid-cols-4 gap-4">
-            {product.images.map((img, idx) => (
-              <button
-                key={idx}
-                onClick={() => setSelectedImage(idx)}
-                className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${
-                  selectedImage === idx
-                    ? 'border-primary ring-2 ring-primary/20 scale-95'
-                    : 'border-outline-variant/40 opacity-70 hover:opacity-100'
-                }`}
-              >
-                <Image
-                  src={img}
-                  alt={`Thumbnail ${idx + 1}`}
-                  fill
-                  className="object-cover"
-                />
-              </button>
-            ))}
-          </div>
+          {gallery.length > 1 && (
+            <div className="grid grid-cols-4 gap-3">
+              {gallery.map((image, index) => (
+                <button
+                  key={`${image}-${index}`}
+                  onClick={() => setActiveImage(index)}
+                  aria-label={`View image ${index + 1}`}
+                  aria-current={index === activeImage}
+                  className={cn(
+                    'relative aspect-square overflow-hidden rounded-lg border-2 bg-surface-container transition-colors',
+                    index === activeImage
+                      ? 'border-primary'
+                      : 'border-transparent hover:border-outline-variant'
+                  )}
+                >
+                  <Image src={getImageUrl(image)} alt="" fill sizes="120px" className="object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-
-        {/* Right Column: Buying Details & Specs */}
-        <div className="lg:col-span-5 space-y-8 sticky top-28">
-          
+        {/* Purchase panel */}
+        <div className="space-y-6 lg:py-4">
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="px-2.5 py-1 bg-secondary-container text-on-secondary-container font-extrabold text-[10px] uppercase tracking-widest rounded-md">
-                {product.tag || 'EDITORIAL EXCLUSIVE'}
-              </span>
-              <button
-                onClick={() => toggleWishlist(product)}
-                className="flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant hover:text-error transition-colors"
-              >
-                <span className={`material-symbols-outlined text-xl ${isWishlisted ? 'fill text-error' : ''}`}>
-                  favorite
-                </span>
-                <span>{isWishlisted ? 'WISHLISTED' : 'SAVE TO WISHLIST'}</span>
-              </button>
-            </div>
-
-            <h1 className="font-headline font-extrabold text-3xl sm:text-4xl text-primary tracking-tight leading-tight uppercase">
-              {product.name}
-            </h1>
-
-            <p className="text-xs text-on-surface-variant font-medium tracking-wide">
-              {product.subtitle}
-            </p>
-
-            <div className="flex items-baseline gap-3 pt-2">
-              <span className="font-headline font-extrabold text-3xl text-primary">
-                ${product.price.toFixed(2)} USD
-              </span>
-              {product.originalPrice && (
-                <span className="text-sm text-outline line-through font-semibold">
-                  ${product.originalPrice.toFixed(2)}
+            <div className="flex flex-wrap items-center gap-2">
+              {item.brand_name && (
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-outline">
+                  {item.brand_name}
                 </span>
               )}
+              {item.is_featured && <Badge tone="accent">Featured</Badge>}
+            </div>
+
+            <h1 className="font-headline text-4xl font-extrabold leading-tight tracking-tight text-primary sm:text-5xl">
+              {item.name}
+            </h1>
+
+            {item.short_description && (
+              <p className="text-base leading-relaxed text-on-surface-variant">
+                {item.short_description}
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-4">
+              {(item.review_count ?? 0) > 0 ? (
+                <a href="#reviews" className="transition-opacity hover:opacity-75">
+                  <StarRating rating={item.avg_rating ?? 0} count={item.review_count} />
+                </a>
+              ) : (
+                <span className="text-xs uppercase tracking-wider text-outline">No reviews yet</span>
+              )}
+              <span className="text-xs text-outline">SKU: {item.sku}</span>
             </div>
           </div>
 
-          <hr className="border-outline-variant/30" />
-
-          {/* Color Selection */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-bold tracking-widest uppercase text-primary">COLOR:</span>
-              <span className="font-semibold text-on-surface-variant">{selectedColor.name}</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              {product.colors.map((color) => (
-                <button
-                  key={color.name}
-                  onClick={() => setSelectedColor(color)}
-                  className={`w-9 h-9 rounded-full border-2 p-0.5 transition-all flex items-center justify-center ${
-                    selectedColor.name === color.name
-                      ? 'border-primary ring-2 ring-primary/20 scale-110'
-                      : 'border-transparent hover:scale-105'
-                  }`}
-                  title={color.name}
-                >
-                  <span
-                    className="w-full h-full rounded-full border border-outline-variant/50"
-                    style={{ backgroundColor: color.hex }}
-                  />
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Size Selection */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-bold tracking-widest uppercase text-primary">SIZE:</span>
-              <button
-                onClick={() => setIsSizeGuideOpen(true)}
-                className="font-bold tracking-wider text-outline hover:text-primary transition-colors underline"
-              >
-                SIZE GUIDE
-              </button>
-            </div>
-            <div className="grid grid-cols-5 gap-2">
-              {product.sizes.map((size) => (
-                <button
-                  key={size}
-                  onClick={() => setSelectedSize(size)}
-                  className={`py-3 text-xs font-extrabold rounded-lg border transition-all ${
-                    selectedSize === size
-                      ? 'bg-primary text-on-primary border-primary shadow-md'
-                      : 'bg-surface text-on-surface border-outline-variant/50 hover:border-primary'
-                  }`}
-                >
-                  {size}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Quantity & Add to Cart */}
-          <div className="space-y-4 pt-2">
-            <div className="flex gap-3">
-              {/* Quantity Picker */}
-              <div className="flex items-center border border-outline-variant rounded-lg bg-surface px-2">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="px-3 py-3 text-sm font-bold text-on-surface hover:bg-surface-container rounded-md"
-                >
-                  -
-                </button>
-                <span className="px-4 text-sm font-extrabold text-primary">{quantity}</span>
-                <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="px-3 py-3 text-sm font-bold text-on-surface hover:bg-surface-container rounded-md"
-                >
-                  +
-                </button>
-              </div>
-
-              {/* Main CTA */}
-              <button
-                onClick={handleAddToCart}
-                className={`flex-1 py-4 px-6 text-xs font-extrabold uppercase tracking-[0.2em] rounded-lg transition-all shadow-xl flex items-center justify-center gap-2 ${
-                  isAddedSuccess
-                    ? 'bg-secondary-container text-on-secondary-container scale-102'
-                    : 'bg-primary text-on-primary hover:bg-primary-container active:scale-98'
-                }`}
-              >
-                <span className="material-symbols-outlined text-lg">
-                  {isAddedSuccess ? 'check_circle' : 'shopping_bag'}
-                </span>
-                {isAddedSuccess ? 'ADDED TO BAG ✓' : `ADD TO BAG • $${(product.price * quantity).toFixed(2)}`}
-              </button>
-            </div>
-
-            <p className="text-[11px] text-center text-outline font-medium">
-              ⚡ In Stock. Ships within 24 hours with complimentary express delivery.
+          <div className="space-y-2 border-y border-outline-variant/30 py-5">
+            <Price price={item.price} salePrice={item.sale_price} size="lg" />
+            <p className="text-xs text-outline">Inclusive of all taxes</p>
+            <p className={cn('flex items-center gap-1.5 text-sm font-semibold', STOCK_TONE[stock.tone])}>
+              <span className="material-symbols-outlined text-base">
+                {stock.tone === 'out' ? 'cancel' : 'check_circle'}
+              </span>
+              {stock.label}
             </p>
           </div>
 
-          <hr className="border-outline-variant/30" />
-
-          {/* Accordion Specification Breakdown */}
-          <div className="space-y-1">
-            {product.specs.map((spec, idx) => (
-              <AccordionItem key={spec.title} title={spec.title} defaultOpen={idx === 0}>
-                <p>{spec.content}</p>
-              </AccordionItem>
-            ))}
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* Related Editorial Drops */}
-      <section className="pt-12 border-t border-outline-variant/30 space-y-8">
-        <div className="flex items-center justify-between">
-          <h2 className="font-headline font-extrabold text-2xl text-primary tracking-tight">
-            RECOMMENDED PAIRINGS
-          </h2>
-          <span className="text-xs font-semibold text-outline uppercase tracking-wider">
-            CAPSULE 04
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {relatedProducts.slice(0, 3).map((item) => (
-            <ProductCard key={item.id} product={item} />
-          ))}
-        </div>
-      </section>
-
-      {/* Size Guide Modal */}
-      {isSizeGuideOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-primary/50 backdrop-blur-sm" onClick={() => setIsSizeGuideOpen(false)} />
-          <div className="relative bg-surface-container-lowest text-on-surface rounded-2xl p-6 max-w-lg w-full z-10 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b pb-3">
-              <h3 className="font-headline font-bold text-lg">AESTHETE GARMENT SIZE GUIDE</h3>
-              <button onClick={() => setIsSizeGuideOpen(false)} className="text-outline hover:text-primary">
-                <span className="material-symbols-outlined">close</span>
+          {/* Quantity */}
+          <div className="flex flex-wrap items-center gap-4">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
+              Quantity
+            </span>
+            <div className="flex items-center overflow-hidden rounded-md border border-outline-variant">
+              <button
+                onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+                disabled={quantity <= 1 || outOfStock}
+                aria-label="Decrease quantity"
+                className="px-4 py-2.5 text-on-surface transition-colors hover:bg-surface-container disabled:opacity-40"
+              >
+                −
+              </button>
+              <span className="min-w-12 px-4 py-2.5 text-center text-sm font-bold text-primary">
+                {quantity}
+              </span>
+              <button
+                onClick={() => setQuantity((value) => Math.min(maxQuantity, value + 1))}
+                disabled={quantity >= maxQuantity || outOfStock}
+                aria-label="Increase quantity"
+                className="px-4 py-2.5 text-on-surface transition-colors hover:bg-surface-container disabled:opacity-40"
+              >
+                +
               </button>
             </div>
-            <div className="text-xs space-y-3 leading-relaxed">
-              <p>All garments are engineered with custom relaxed boxy cuts. Measure around the fullest part of your chest for optimal fit.</p>
-              <table className="w-full text-left border-collapse mt-2">
-                <thead>
-                  <tr className="border-b font-bold bg-surface-container">
-                    <th className="p-2">SIZE</th>
-                    <th className="p-2">CHEST (INCHES)</th>
-                    <th className="p-2">LENGTH (INCHES)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y text-on-surface-variant">
-                  <tr><td className="p-2 font-bold">S</td><td className="p-2">38 - 40</td><td className="p-2">27.5</td></tr>
-                  <tr><td className="p-2 font-bold">M</td><td className="p-2">41 - 43</td><td className="p-2">28.5</td></tr>
-                  <tr><td className="p-2 font-bold">L</td><td className="p-2">44 - 46</td><td className="p-2">29.5</td></tr>
-                  <tr><td className="p-2 font-bold">XL</td><td className="p-2">47 - 49</td><td className="p-2">30.5</td></tr>
-                </tbody>
-              </table>
+            {!outOfStock && (
+              <span className="text-sm text-on-surface-variant">
+                Subtotal{' '}
+                <strong className="text-primary">{formatCurrency(unitPrice * quantity)}</strong>
+              </span>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="space-y-3">
+            <div className="flex gap-3">
+              <Button
+                onClick={handleAddToCart}
+                loading={adding}
+                disabled={outOfStock}
+                fullWidth
+                icon="shopping_bag"
+                className="py-4"
+              >
+                {outOfStock ? 'Out of Stock' : 'Add to Bag'}
+              </Button>
+              <button
+                onClick={handleWishlist}
+                aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+                aria-pressed={isWishlisted}
+                className="flex w-14 shrink-0 items-center justify-center rounded-md border border-outline-variant text-on-surface transition-colors hover:border-error hover:text-error"
+              >
+                <span
+                  className={cn('material-symbols-outlined text-2xl', isWishlisted && 'fill text-error')}
+                >
+                  favorite
+                </span>
+              </button>
             </div>
+
+            <Button
+              variant="outline"
+              onClick={buyNow}
+              disabled={outOfStock || adding}
+              fullWidth
+              className="py-4"
+            >
+              Buy It Now
+            </Button>
+          </div>
+
+          {/* Details */}
+          <div className="pt-2">
+            {item.description && (
+              <AccordionItem title="Description" defaultOpen>
+                <p className="whitespace-pre-line">{item.description}</p>
+              </AccordionItem>
+            )}
+            <AccordionItem title="Product Details">
+              <dl className="space-y-1.5">
+                <div className="flex justify-between">
+                  <dt className="text-outline">SKU</dt>
+                  <dd className="font-medium text-on-surface">{item.sku}</dd>
+                </div>
+                {item.brand_name && (
+                  <div className="flex justify-between">
+                    <dt className="text-outline">Brand</dt>
+                    <dd className="font-medium text-on-surface">{item.brand_name}</dd>
+                  </div>
+                )}
+                {item.category_name && (
+                  <div className="flex justify-between">
+                    <dt className="text-outline">Category</dt>
+                    <dd className="font-medium text-on-surface">{item.category_name}</dd>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <dt className="text-outline">Availability</dt>
+                  <dd className="font-medium text-on-surface">{stock.label}</dd>
+                </div>
+              </dl>
+            </AccordionItem>
+            <AccordionItem title="Shipping & Returns">
+              <p>
+                Complimentary express shipping on orders over ₹500; a flat ₹49 applies below that.
+                Delivered orders can be returned within 7 days from your account.
+              </p>
+            </AccordionItem>
           </div>
         </div>
-      )}
+      </div>
 
+      <div className="mx-auto max-w-[1440px] px-4 pt-20 sm:px-8">
+        <ProductReviews
+          productId={productId}
+          averageRating={item.avg_rating ?? 0}
+          reviewCount={item.review_count ?? 0}
+          onReviewSubmitted={product.reload}
+        />
+      </div>
+
+      <div className="space-y-20 pt-20">
+        <ProductSection
+          eyebrow="Complete the look"
+          title="Frequently Bought Together"
+          products={alsoBought.data}
+          loading={alsoBought.loading}
+          error={alsoBought.error}
+          onRetry={alsoBought.reload}
+          limit={4}
+          hideWhenEmpty
+        />
+
+        <ProductSection
+          eyebrow="You may also like"
+          title="Related Products"
+          products={related.data}
+          loading={related.loading}
+          error={related.error}
+          onRetry={related.reload}
+          limit={4}
+          hideWhenEmpty
+        />
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { executeQuery, runInTransaction } from '../database/db';
 import sql from 'mssql';
 import { Order, OrderItem } from '../interfaces/order.interface';
+import { ApiError } from '../utils/ApiError';
 
 export class OrderRepository {
   async findAll(page = 1, limit = 10, search?: string): Promise<{ data: Order[]; total: number }> {
@@ -108,12 +109,38 @@ export class OrderRepository {
     };
   }
 
+  /**
+   * Status transitions an operator may set. An unconstrained value would land
+   * in the CHECK-constrained column as a driver error, or — for payment_status
+   * — let staff mark an order Paid outside the gateway flow.
+   */
+  static readonly ALLOWED_ORDER_STATUSES = [
+    'Pending', 'Confirmed', 'Processing', 'Packed', 'Shipped',
+    'Out for Delivery', 'Delivered', 'Cancelled', 'Returned', 'Refunded',
+  ] as const;
+
+  static readonly ALLOWED_PAYMENT_STATUSES = ['Pending', 'Paid', 'Failed', 'Refunded'] as const;
+
   async updateStatus(id: number, orderStatus: string, paymentStatus: string): Promise<boolean> {
+    if (!OrderRepository.ALLOWED_ORDER_STATUSES.includes(orderStatus as any)) {
+      throw new ApiError(400, `Invalid order status: ${orderStatus}`);
+    }
+    if (paymentStatus && !OrderRepository.ALLOWED_PAYMENT_STATUSES.includes(paymentStatus as any)) {
+      throw new ApiError(400, `Invalid payment status: ${paymentStatus}`);
+    }
+
+    // delivered_at is stamped exactly once, the first time the order reaches
+    // Delivered. The returns window is measured from it; using updated_at
+    // meant any later edit silently extended eligibility.
     const query = `
-      UPDATE Orders 
-      SET order_status = @orderStatus, 
-          payment_status = @paymentStatus, 
-          updated_at = GETDATE() 
+      UPDATE Orders
+      SET order_status = @orderStatus,
+          payment_status = @paymentStatus,
+          delivered_at = CASE
+            WHEN @orderStatus = 'Delivered' AND delivered_at IS NULL THEN GETDATE()
+            ELSE delivered_at
+          END,
+          updated_at = GETDATE()
       WHERE order_id = @id
     `;
     const result = await executeQuery(query, {
@@ -121,6 +148,19 @@ export class OrderRepository {
       orderStatus: { type: sql.VarChar, value: orderStatus },
       paymentStatus: { type: sql.VarChar, value: paymentStatus }
     });
+
+    if (result.rowsAffected[0] > 0) {
+      // Keep the audit trail complete for admin-driven transitions too.
+      await executeQuery(
+        `INSERT INTO OrderStatusHistory (order_id, status, notes, changed_at)
+         VALUES (@id, @orderStatus, 'Updated by staff', GETDATE())`,
+        {
+          id: { type: sql.Int, value: id },
+          orderStatus: { type: sql.VarChar, value: orderStatus },
+        }
+      );
+    }
+
     return result.rowsAffected[0] > 0;
   }
 }

@@ -206,11 +206,14 @@ export const CACHE_TTL = {
 
 // ─── Rate Limit Configs ──────────────────────────────────────────────────────
 export const RATE_LIMITS = {
-  AUTH: { windowMs: 15 * 60 * 1000, max: 10 },          // 10 per 15 min
+  AUTH: { windowMs: 15 * 60 * 1000, max: 10 },           // 10 per 15 min
   FORGOT_PASSWORD: { windowMs: 60 * 60 * 1000, max: 3 }, // 3 per hour
+  OTP_VERIFY: { windowMs: 15 * 60 * 1000, max: 5 },      // 5 per 15 min — 6-digit keyspace
   API: { windowMs: 15 * 60 * 1000, max: 200 },           // 200 per 15 min
   SEARCH: { windowMs: 60 * 1000, max: 50 },              // 50 per minute
   CHECKOUT: { windowMs: 60 * 60 * 1000, max: 20 },       // 20 per hour
+  CONTENT_WRITE: { windowMs: 60 * 60 * 1000, max: 30 },  // reviews/tickets/returns
+  UPLOAD: { windowMs: 60 * 60 * 1000, max: 20 },         // 20 files per hour
 } as const;
 
 // ─── Misc ────────────────────────────────────────────────────────────────────
@@ -222,3 +225,23 @@ export const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 export const ACCESS_TOKEN_EXPIRY = '15m';
 export const MAX_LOGIN_ATTEMPTS = 5;
 export const ACCOUNT_LOCK_DURATION_MINUTES = 30;
+
+// ─── Security ────────────────────────────────────────────────────────────────
+/** bcrypt work factor. Single source of truth for both auth stacks. */
+export const BCRYPT_COST = 12;
+
+/**
+ * The only message returned for a failed sign-in. Constant across "no such
+ * user", "wrong password", "locked" and "inactive" so the response cannot be
+ * used to enumerate accounts or to pace a spray under the lockout threshold.
+ */
+export const GENERIC_LOGIN_FAILURE = 'Invalid email or password.';
+
+/** Wrong-OTP guesses tolerated before the OTP is invalidated outright. */
+export const MAX_OTP_ATTEMPTS = 5;
+
+/** Roles permitted to sign in to the admin console. */
+export const STAFF_ROLES = ['Super Admin', 'Admin', 'Support', 'Inventory Manager'] as const;
+
+/** Seconds a validated session is cached before it is re-read from the DB. */
+export const SESSION_CACHE_TTL_SECONDS = 30;

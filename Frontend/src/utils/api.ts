@@ -32,23 +32,39 @@ const request = async <T>(endpoint: string, options: RequestInit = {}): Promise<
     (headers as any)['Content-Type'] = 'application/json';
   }
 
+  // Debug output is gated to development. In production these lines ran on
+  // every admin request, echoing endpoint paths and up to 500 characters of
+  // raw error bodies into the browser console — a ready-made map of the
+  // internal API for anyone with devtools open, and a leak of any sensitive
+  // content the server included in an error page.
+  const isDev = process.env.NODE_ENV !== 'production';
+
   try {
     const url = `${API_BASE_URL}${endpoint}`;
-    console.log(`[API Request] Fetching: ${url}`);
     const response = await fetch(url, {
       ...options,
       headers,
     });
 
+    // A 401 means the session is gone (expired, revoked, or logged out
+    // elsewhere). Clear local state so the UI cannot keep presenting an
+    // authenticated shell backed by a dead token.
+    if (response.status === 401 && typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
+
     let json: any;
     const contentType = response.headers.get('content-type');
-    
+
     if (contentType && contentType.includes('application/json')) {
       json = await response.json();
     } else {
-      const text = await response.text();
-      console.error(`[API Request Error] Expected JSON, got text/html (Status ${response.status}):`, text.substring(0, 500));
-      throw new Error(`API server returned non-JSON response (Status ${response.status})`);
+      if (isDev) {
+        const text = await response.text();
+        console.error(`[API] Non-JSON response (${response.status}):`, text.substring(0, 500));
+      }
+      throw new Error(`The server returned an unexpected response (status ${response.status}).`);
     }
 
     if (!response.ok) {
@@ -57,7 +73,7 @@ const request = async <T>(endpoint: string, options: RequestInit = {}): Promise<
 
     return json as T; // Return full response which has success and data/payload
   } catch (error: any) {
-    console.error(`[API Request Failure]:`, error.message);
+    if (isDev) console.error('[API] Request failed:', error.message);
     throw error;
   }
 };

@@ -63,4 +63,16 @@ export class CustomerRepository {
     });
     return result.rowsAffected[0] > 0;
   }
+
+  /**
+   * End every live session for a customer. Called when an account is
+   * deactivated or banned so the change takes effect immediately rather than
+   * whenever the current access token happens to expire.
+   */
+  async revokeAllSessions(userId: number): Promise<void> {
+    await executeQuery(
+      `UPDATE CustomerSessions SET is_active = 0 WHERE user_id = @userId`,
+      { userId: { type: sql.Int, value: userId } }
+    );
+  }
 }

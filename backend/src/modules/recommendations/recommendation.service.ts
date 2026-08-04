@@ -30,7 +30,8 @@ export class RecommendationService {
         AND p.product_id NOT IN (
           SELECT product_id FROM RecentlyViewed WHERE user_id = @user_id
         )
-      GROUP BY p.product_id, p.name, p.slug, p.price, p.sale_price, c.name, b.name
+      GROUP BY p.product_id, p.name, p.slug, p.price, p.sale_price, c.name, b.name,
+               p.is_featured, p.created_at
       ORDER BY p.is_featured DESC, avg_rating DESC, p.created_at DESC
     `;
 
@@ -51,7 +52,8 @@ export class RecommendationService {
         LEFT JOIN Brands b ON p.brand_id = b.brand_id
         LEFT JOIN Reviews r ON p.product_id = r.product_id AND r.status = 'Approved'
         WHERE p.status = 'Active'
-        GROUP BY p.product_id, p.name, p.slug, p.price, p.sale_price, c.name, b.name
+        GROUP BY p.product_id, p.name, p.slug, p.price, p.sale_price, c.name, b.name,
+                 p.is_featured
         ORDER BY p.is_featured DESC, avg_rating DESC
       `;
       const fallbackResult = await executeQuery(fallbackQuery, {

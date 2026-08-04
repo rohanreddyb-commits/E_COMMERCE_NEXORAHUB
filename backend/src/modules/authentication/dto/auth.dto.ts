@@ -14,6 +14,8 @@ export interface RegisterDto {
   email: string;
   password: string;
   phone?: string;
+  /** Optional referral code; validated and rejected on self-referral. */
+  referralCode?: string;
 }
 
 export interface LoginDto {

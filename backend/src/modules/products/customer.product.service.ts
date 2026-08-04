@@ -155,13 +155,14 @@ export class CustomerProductService {
     if (cached) return cached;
 
     const result = await executeQuery(
+      // p.created_at must be in the GROUP BY to be usable in ORDER BY.
       `SELECT TOP 12 p.product_id, p.name, p.slug, p.price, p.sale_price, p.is_featured,
               (SELECT TOP 1 pi.image_url FROM ProductImages pi WHERE pi.product_id = p.product_id ORDER BY pi.is_primary DESC) as primary_image,
               ISNULL(AVG(CAST(r.rating AS FLOAT)), 0) as avg_rating
        FROM Products p
        LEFT JOIN Reviews r ON p.product_id = r.product_id AND r.status = 'Approved'
        WHERE p.status = 'Active' AND p.is_featured = 1
-       GROUP BY p.product_id, p.name, p.slug, p.price, p.sale_price, p.is_featured
+       GROUP BY p.product_id, p.name, p.slug, p.price, p.sale_price, p.is_featured, p.created_at
        ORDER BY p.created_at DESC`
     );
     const products = result.recordset;

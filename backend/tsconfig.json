@@ -13,5 +13,12 @@
     "sourceMap": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist"],
+  "ts-node": {
+    // Load every file in "include", not just those reached through imports, so
+    // the ambient Express augmentation in src/core/types/express.d.ts (req.customer,
+    // req.requestId) is registered. Without this `npm run dev` fails to compile
+    // even though `npm run build` succeeds.
+    "files": true
+  }
 }

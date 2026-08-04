@@ -1,5 +1,6 @@
 import { executeQuery } from '../../database/db';
 import sql from 'mssql';
+import { logger } from '../../config/logger';
 
 export interface NotificationPayload {
   type: string;
@@ -27,8 +28,9 @@ export class NotificationService {
         }
       );
     } catch (err: any) {
-      // Non-critical — don't throw
-      console.error('[NotificationService] Failed to create notification:', err.message);
+      // Non-critical — don't throw. Routed through the logger so it reaches
+      // the durable transports and passes the redaction filter.
+      logger.error(`[NotificationService] Failed to create notification: ${err.message}`);
     }
   }
 

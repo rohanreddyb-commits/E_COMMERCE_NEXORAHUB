@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm audit *)",
+      "Bash(grep -iE \"\\\\.env$|\\\\.env\\\\.\")",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(npm install *)",
+      "Bash(node -e \"const l=require\\('./package-lock.json'\\);console.log\\('multer', l.packages['node_modules/multer'].version\\)\")",
+      "Bash(node -e ' *)",
+      "Bash(npm ls *)",
+      "Bash(cp package.json /tmp/pkg.bak)",
+      "Bash(cp package-lock.json /tmp/lock.bak)",
+      "Bash(BOOTSTRAP_ADMIN_EMAIL=ops@nexorahub.test BOOTSTRAP_ADMIN_PASSWORD=short npx ts-node src/scripts/bootstrapAdmin.ts)",
+      "Bash(BOOTSTRAP_ADMIN_EMAIL=ops@nexorahub.test BOOTSTRAP_ADMIN_PASSWORD='Str0ngOpsPassw0rd!2026' npx ts-node src/scripts/bootstrapAdmin.ts)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 5099 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Start-Sleep -Seconds 2; Write-Output \"5099 released\")",
+      "PowerShell(Get-NetTCPConnection -LocalPort 5099 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Start-Sleep -Seconds 1; Write-Output \"test server stopped\")",
+      "Bash(awk '{print $2}')",
+      "Bash(grep -vE \"^\\(select|a|o|p|u|r|i|c|b|t|sm|st|oi|oi1|oi2|pi|rv|ci|lh|h|the|inserted|deleted|json|dbo|sys|values|set|top|distinct|count|1|nolock\\)$\")",
+      "Bash(sed -i 's/$2b$12$kbEOauaOuYs1ADffV3zMSOcZsFDkfpCiIEf5SrsIV9JzUB9XrBPRi/$2b$12$Cf6ntfQFstAO4ps6TD\\\\/2bOfcDnDdL1AO5QELYylG0Dm2ftkqg4bbS/g' sample_data.sql)",
+      "Bash(grep -c '\\\\$2b\\\\$12\\\\$Cf6ntfQFstAO4ps6TD' sample_data.sql)",
+      "Bash(git status *)",
+      "Bash(grep -E \"\\\\.env$|\\\\.env\\\\.local\")",
+      "PowerShell(Get-NetTCPConnection -LocalPort 5099 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Write-Output stopped)",
+      "Bash(curl -s http://localhost:5099/api/v1/customer/products?limit=3)",
+      "Bash(node -e \"const p=require\\('./backend/package.json'\\);console.log\\(Object.entries\\(p.dependencies\\).map\\(\\([k,v]\\)=>k+'@'+v\\).join\\('\\\\n'\\)\\)\")",
+      "Bash(node -e \"const p=require\\('./Frontend_Node/package.json'\\);console.log\\(Object.entries\\(p.dependencies\\).map\\(\\([k,v]\\)=>k+'@'+v\\).join\\('\\\\n'\\)\\)\")",
+      "Bash(node -e \"const p=require\\('./Frontend/package.json'\\);console.log\\(Object.entries\\(p.dependencies\\).map\\(\\([k,v]\\)=>k+'@'+v\\).join\\('\\\\n'\\)\\)\")",
+      "Bash(cd c:/E_Commerce_website/backend/src && find modules core routes middlewares middleware controllers -maxdepth 1 -type d 2>/dev/null | sort *)",
+      "Read(//c/src/core/routes/**)"
+    ]
+  }
+}

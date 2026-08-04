@@ -2,7 +2,11 @@ import { Router } from 'express';
 import { CustomerAuthController } from './customer.auth.controller';
 import { validateRequest } from '../../common/middleware/validate.middleware';
 import { authenticateCustomer } from '../../common/middleware/customer.auth.middleware';
-import { authRateLimiter, forgotPasswordRateLimiter } from '../../common/middleware/rateLimiter.middleware';
+import {
+  authRateLimiter,
+  forgotPasswordRateLimiter,
+  otpVerifyRateLimiter,
+} from '../../common/middleware/rateLimiter.middleware';
 import {
   registerValidation,
   loginValidation,
@@ -22,7 +26,7 @@ router.post('/register', authRateLimiter, registerValidation, validateRequest, c
 router.post('/login', authRateLimiter, loginValidation, validateRequest, controller.login);
 router.post('/refresh', refreshValidation, validateRequest, controller.refresh);
 router.post('/forgot-password', forgotPasswordRateLimiter, forgotPasswordValidation, validateRequest, controller.forgotPassword);
-router.post('/verify-otp', authRateLimiter, verifyOtpValidation, validateRequest, controller.verifyOtp);
+router.post('/verify-otp', otpVerifyRateLimiter, verifyOtpValidation, validateRequest, controller.verifyOtp);
 router.post('/reset-password', authRateLimiter, resetPasswordValidation, validateRequest, controller.resetPassword);
 
 // ─── Protected Routes ─────────────────────────────────────────────────────────

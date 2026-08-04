@@ -18,7 +18,7 @@ export class CustomerReturnService {
   }) {
     // 1. Check order eligibility
     const orderResult = await executeQuery(
-      `SELECT order_id, order_status, created_at, updated_at FROM Orders
+      `SELECT order_id, order_status, created_at, updated_at, delivered_at FROM Orders
        WHERE order_id = @order_id AND user_id = @user_id`,
       {
         order_id: { type: sql.Int, value: data.orderId },
@@ -31,8 +31,11 @@ export class CustomerReturnService {
       throw new ApiError(400, `Returns can only be requested for delivered orders. Current status: ${order.order_status}`);
     }
 
-    // Check return window
-    const deliveredDate = new Date(order.updated_at || order.created_at);
+    // Return window is measured from delivered_at, stamped once when the order
+    // reaches Delivered. It previously used updated_at, which ANY subsequent
+    // status or field change refreshed — silently extending eligibility
+    // indefinitely for orders that kept being touched.
+    const deliveredDate = new Date(order.delivered_at || order.updated_at || order.created_at);
     const daysSinceDelivery = Math.floor((Date.now() - deliveredDate.getTime()) / (1000 * 60 * 60 * 24));
     if (daysSinceDelivery > RETURN_WINDOW_DAYS) {
       throw new ApiError(400, `Return window expired. Returns must be requested within ${RETURN_WINDOW_DAYS} days of delivery.`);

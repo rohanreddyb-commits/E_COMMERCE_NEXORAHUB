@@ -1,6 +1,7 @@
 import { executeQuery, runInTransaction } from '../../database/db';
 import sql from 'mssql';
 import { hashToken } from '../../common/utils/crypto.util';
+import { sessionRegistry } from '../../shared/session/session.registry';
 
 export interface CustomerSession {
   session_id: string;
@@ -105,6 +106,10 @@ export class CustomerAuthRepository {
     });
   }
 
+  /**
+   * Revocation must invalidate the session cache as well as the row, or the
+   * access token keeps working until the cache TTL lapses.
+   */
   async revokeSession(sessionId: string): Promise<void> {
     const query = `
       UPDATE CustomerSessions SET is_active = 0
@@ -113,6 +118,7 @@ export class CustomerAuthRepository {
     await executeQuery(query, {
       session_id: { type: sql.VarChar(100), value: sessionId },
     });
+    sessionRegistry.invalidate(sessionId);
   }
 
   async revokeAllUserSessions(userId: number): Promise<void> {
@@ -123,6 +129,7 @@ export class CustomerAuthRepository {
     await executeQuery(query, {
       user_id: { type: sql.Int, value: userId },
     });
+    sessionRegistry.invalidateUser(userId);
   }
 
   async getUserActiveSessions(userId: number): Promise<CustomerSession[]> {
@@ -194,6 +201,42 @@ export class CustomerAuthRepository {
       token_hash: { type: sql.VarChar(255), value: tokenHash },
     });
     return result.recordset[0] || null;
+  }
+
+  /**
+   * Record a wrong OTP guess and return the running total. The caller
+   * invalidates the record once MAX_OTP_ATTEMPTS is reached, which bounds a
+   * distributed brute force against the 6-digit keyspace.
+   */
+  async incrementPasswordResetAttempts(userId: number): Promise<number> {
+    const result = await executeQuery(
+      `UPDATE PasswordResetTokens
+       SET attempts = attempts + 1
+       OUTPUT inserted.attempts
+       WHERE user_id = @user_id AND used = 0 AND expires_at > GETDATE()`,
+      { user_id: { type: sql.Int, value: userId } }
+    );
+    return result.recordset[0]?.attempts ?? 0;
+  }
+
+  async incrementEmailVerificationAttempts(userId: number): Promise<number> {
+    const result = await executeQuery(
+      `UPDATE EmailVerifications
+       SET attempts = attempts + 1
+       OUTPUT inserted.attempts
+       WHERE user_id = @user_id AND verified = 0 AND expires_at > GETDATE()`,
+      { user_id: { type: sql.Int, value: userId } }
+    );
+    return result.recordset[0]?.attempts ?? 0;
+  }
+
+  /** Force-expire an email verification OTP after too many wrong guesses. */
+  async expireEmailVerification(userId: number): Promise<void> {
+    await executeQuery(
+      `UPDATE EmailVerifications SET expires_at = GETDATE()
+       WHERE user_id = @user_id AND verified = 0`,
+      { user_id: { type: sql.Int, value: userId } }
+    );
   }
 
   async markPasswordResetUsed(userId: number): Promise<void> {

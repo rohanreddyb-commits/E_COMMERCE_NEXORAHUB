@@ -4,6 +4,7 @@ import { VariantRepository } from '../repositories/variant.repository';
 import { ApiResponse } from '../utils/ApiResponse';
 import { ApiError } from '../utils/ApiError';
 import { runInTransaction } from '../database/db';
+import { logger } from '../config/logger';
 import sql from 'mssql';
 
 const variantRepo = new VariantRepository();
@@ -35,14 +36,11 @@ export class ProductController {
     const files = req.files as Express.Multer.File[] | undefined;
 
     if (files && files.length > 0) {
-      files.forEach((file, idx) => {
-        console.log(`[Upload - Create] File[${idx}] received: originalName=${file.originalname}, filename=${file.filename}, savedPath=${file.path}, size=${file.size} bytes`);
-      });
+      logger.info(`[Products] Create: ${files.length} image(s) accepted.`);
     }
 
     const images = files?.map((file, idx) => {
       const dbPath = `/uploads/${file.filename}`;
-      console.log(`[Upload - Create] File[${idx}] mapping to DB path: ${dbPath}`);
       return {
         image_url: dbPath,
         is_primary: idx === 0,
@@ -272,14 +270,11 @@ export class ProductController {
     const files = req.files as Express.Multer.File[] | undefined;
 
     if (files && files.length > 0) {
-      files.forEach((file, idx) => {
-        console.log(`[Upload - Update] File[${idx}] received: originalName=${file.originalname}, filename=${file.filename}, savedPath=${file.path}, size=${file.size} bytes`);
-      });
+      logger.info(`[Products] Update: ${files.length} image(s) accepted.`);
     }
 
     const images = files?.map((file, idx) => {
       const dbPath = `/uploads/${file.filename}`;
-      console.log(`[Upload - Update] File[${idx}] mapping to DB path: ${dbPath}`);
       return {
         image_url: dbPath,
         is_primary: idx === 0,

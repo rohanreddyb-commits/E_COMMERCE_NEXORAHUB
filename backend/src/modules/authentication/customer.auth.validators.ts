@@ -26,6 +26,11 @@ export const registerValidation = [
   body('phone')
     .optional()
     .isMobilePhone('any').withMessage('Please provide a valid phone number.'),
+  body('referralCode')
+    .optional()
+    .trim()
+    .isLength({ max: 50 })
+    .matches(/^[A-Za-z0-9]+$/).withMessage('Invalid referral code format.'),
 ];
 
 export const loginValidation = [

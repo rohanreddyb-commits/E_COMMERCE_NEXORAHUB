@@ -1,0 +1,14 @@
+export { authService } from './auth.service';
+export { productService, catalogService } from './product.service';
+export { cartService } from './cart.service';
+export { wishlistService } from './wishlist.service';
+export { addressService } from './address.service';
+export { profileService } from './profile.service';
+export { orderService } from './order.service';
+export { checkoutService, createIdempotencyKey } from './checkout.service';
+export { paymentService } from './payment.service';
+export { reviewService } from './review.service';
+export { couponService } from './coupon.service';
+export { searchService, recentSearches } from './search.service';
+export { notificationService } from './notification.service';
+export { recommendationService, loyaltyService, returnService } from './misc.service';

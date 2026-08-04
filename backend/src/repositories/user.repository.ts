@@ -1,8 +1,24 @@
 import { executeQuery, runInTransaction } from '../database/db';
 import sql from 'mssql';
-import { User, Role } from '../interfaces/user.interface';
+import { User, Role, SafeUser } from '../interfaces/user.interface';
+
+/**
+ * Explicit projection used wherever a user record may reach an HTTP response.
+ * Never widen this to `*` — `password_hash` must not leave the repository
+ * except through findByEmail/findById, which exist solely to feed bcrypt.
+ */
+const SAFE_USER_PROJECTION = `user_id, first_name, last_name, email, phone, status, last_login, created_at, updated_at`;
+
+const SAFE_USER_OUTPUT = SAFE_USER_PROJECTION.split(', ')
+  .map((column) => `inserted.${column}`)
+  .join(', ');
 
 export class UserRepository {
+  /**
+   * Returns the full row INCLUDING password_hash — for credential
+   * verification only. Never pass the result to a response serializer;
+   * use findSafeById or toSafeUser() at the boundary.
+   */
   async findByEmail(email: string): Promise<User | null> {
     const query = `SELECT * FROM Users WHERE email = @email`;
     const result = await executeQuery(query, {
@@ -11,6 +27,7 @@ export class UserRepository {
     return result.recordset[0] || null;
   }
 
+  /** As findByEmail — includes password_hash. Internal use only. */
   async findById(userId: number): Promise<User | null> {
     const query = `SELECT * FROM Users WHERE user_id = @user_id`;
     const result = await executeQuery(query, {
@@ -19,11 +36,25 @@ export class UserRepository {
     return result.recordset[0] || null;
   }
 
-  async createUser(userData: Partial<User>, roleId: number): Promise<User> {
+  /** Credential-free projection, safe to return from a controller. */
+  async findSafeById(userId: number): Promise<SafeUser | null> {
+    const query = `SELECT ${SAFE_USER_PROJECTION} FROM Users WHERE user_id = @user_id`;
+    const result = await executeQuery(query, {
+      user_id: { type: sql.Int, value: userId },
+    });
+    return result.recordset[0] || null;
+  }
+
+  /**
+   * `roleId` is resolved by the caller from a trusted source — never from a
+   * request body. See AuthService.register (always Customer) and
+   * UserController.createUser (Super Admin only, validated against Roles).
+   */
+  async createUser(userData: Partial<User>, roleId: number): Promise<SafeUser> {
     return runInTransaction(async (transaction) => {
       const insertUserQuery = `
         INSERT INTO Users (first_name, last_name, email, password_hash, phone, status)
-        OUTPUT inserted.*
+        OUTPUT ${SAFE_USER_OUTPUT}
         VALUES (@first_name, @last_name, @email, @password_hash, @phone, @status)
       `;
       const request = transaction.request();
@@ -61,6 +92,22 @@ export class UserRepository {
       user_id: { type: sql.Int, value: userId },
     });
     return result.recordset;
+  }
+
+  /** Resolve a role by name so callers never hardcode IDENTITY values. */
+  async findRoleByName(name: string): Promise<Role | null> {
+    const result = await executeQuery(`SELECT * FROM Roles WHERE name = @name`, {
+      name: { type: sql.VarChar(50), value: name },
+    });
+    return result.recordset[0] || null;
+  }
+
+  /** Used to validate an operator-supplied role_id against the Roles table. */
+  async findRoleById(roleId: number): Promise<Role | null> {
+    const result = await executeQuery(`SELECT * FROM Roles WHERE role_id = @role_id`, {
+      role_id: { type: sql.Int, value: roleId },
+    });
+    return result.recordset[0] || null;
   }
 
   async getUserPermissions(userId: number): Promise<string[]> {
