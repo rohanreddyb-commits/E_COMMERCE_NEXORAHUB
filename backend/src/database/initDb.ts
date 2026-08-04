@@ -2,49 +2,65 @@ import fs from "fs";
 import path from "path";
 import { getPool } from "./db";
 import { logger } from "../config/logger";
+import { env } from "../config/env";
+
+/**
+ * Migration files applied on boot, in order.
+ *
+ * schema.sql is the single, consolidated master schema — every table (admin
+ * catalogue/orders, customer account features, product variants) and every
+ * security-hardening constraint/index, all in one idempotent pass. seed.sql
+ * seeds roles and a safe demo catalog afterward.
+ *
+ * Both files are written so that running them against an empty database, a
+ * partially-migrated database from an older version of this project, or an
+ * already-fully-migrated database all converge to the same end state with
+ * zero errors and zero data loss — that is what makes it safe to run
+ * unattended on every boot, on any machine.
+ *
+ * database/sample_data.sql is intentionally NOT listed here: it seeds fake
+ * customers/orders for demo screenshots and is meant to be run by hand.
+ */
+const MIGRATIONS: { file: string; description: string }[] = [
+  { file: "schema.sql", description: "database schema" },
+  { file: "seed.sql", description: "seed data" },
+];
+
+/** MSSQL batches are separated by a lone GO; split so each runs on its own. */
+const splitBatches = (sql: string): string[] =>
+  sql
+    .split(/\r?\n\s*GO\s*(?:\r?\n|$)/i)
+    .map((batch) => batch.trim())
+    .filter((batch) => batch.length > 0);
 
 export const initializeDatabase = async (): Promise<void> => {
   try {
+    // Schema changes must be a deliberate, reviewable step in production, not
+    // a side effect of a process restart. Opt in for a single deploy with
+    // RUN_MIGRATIONS=true, then unset it.
+    if (env.IS_PRODUCTION && process.env.RUN_MIGRATIONS !== "true") {
+      logger.info(
+        "Skipping automatic migrations in production. Set RUN_MIGRATIONS=true for one deploy to apply them."
+      );
+      return;
+    }
+
     logger.info("Checking database initialization...");
     const pool = await getPool();
 
-    // 1. Read and run schema.sql
-    const schemaPath = path.join(__dirname, "../../database/schema.sql");
-    if (fs.existsSync(schemaPath)) {
-      const schemaSql = fs.readFileSync(schemaPath, "utf8");
-      logger.info("Executing database schema migration...");
-      
-      // Split by GO (case-insensitive, on its own line with optional comments/whitespace)
-      const batches = schemaSql
-        .split(/\r?\n\s*GO\s*(?:\r?\n|$)/i)
-        .map((b) => b.trim())
-        .filter((b) => b.length > 0);
+    for (const { file, description } of MIGRATIONS) {
+      const filePath = path.join(__dirname, "../../database", file);
 
-      for (const batch of batches) {
+      if (!fs.existsSync(filePath)) {
+        logger.warn(`Migration file not found at ${filePath} — skipping.`);
+        continue;
+      }
+
+      logger.info(`Executing ${description} migration (${file})...`);
+      for (const batch of splitBatches(fs.readFileSync(filePath, "utf8"))) {
         await pool.request().query(batch);
       }
-      logger.info("Database schema migration completed successfully.");
-    } else {
-      logger.warn(`Schema file not found at ${schemaPath}`);
-    }
-
-    // 2. Read and run seed.sql
-    const seedPath = path.join(__dirname, "../../database/seed.sql");
-    if (fs.existsSync(seedPath)) {
-      const seedSql = fs.readFileSync(seedPath, "utf8");
-      logger.info("Executing database seed data migration...");
-      
-      const batches = seedSql
-        .split(/\r?\n\s*GO\s*(?:\r?\n|$)/i)
-        .map((b) => b.trim())
-        .filter((b) => b.length > 0);
-
-      for (const batch of batches) {
-        await pool.request().query(batch);
-      }
-      logger.info("Database seed data migration completed successfully.");
-    } else {
-      logger.warn(`Seed file not found at ${seedPath}`);
+      logger.info(`Migration ${file} completed successfully.`);
     }
   } catch (err: any) {
     logger.error(`Database initialization failed: ${err.message}`);

@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { ProfileController } from './profile.controller';
 import { authenticateCustomer } from '../../common/middleware/customer.auth.middleware';
-import { upload } from '../../middleware/upload';
+import { upload, verifyUploadedImages } from '../../middleware/upload';
+import { uploadRateLimiter } from '../../common/middleware/rateLimiter.middleware';
 import { body } from 'express-validator';
 import { validateRequest } from '../../common/middleware/validate.middleware';
 
@@ -19,7 +20,13 @@ const updateProfileValidation = [
 router.use(authenticateCustomer);
 router.get('/', controller.getProfile);
 router.patch('/', updateProfileValidation, validateRequest, controller.updateProfile);
-router.post('/avatar', upload.single('avatar'), controller.uploadAvatar);
+router.post(
+  '/avatar',
+  uploadRateLimiter,
+  upload.single('avatar'),
+  verifyUploadedImages,
+  controller.uploadAvatar
+);
 router.delete('/avatar', controller.removeAvatar);
 
 export default router;

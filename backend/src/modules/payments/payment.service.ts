@@ -2,6 +2,7 @@ import { executeQuery } from '../../database/db';
 import sql from 'mssql';
 import { getPaymentGateway } from './gateways/simulated.gateway';
 import { ApiError } from '../../utils/ApiError';
+import { logger } from '../../config/logger';
 import { AuditService } from '../../shared/audit/audit.service';
 import { NotificationService } from '../notifications/notification.service';
 import { parsePaginationParams, buildPaginatedResult } from '../../common/utils/pagination.util';
@@ -48,14 +49,46 @@ export class PaymentService {
 
   async verifyPayment(userId: number, orderId: number, paymentData: Record<string, string>) {
     const orderResult = await executeQuery(
-      `SELECT order_id, total_amount, user_id, order_number FROM Orders WHERE order_id = @order_id AND user_id = @user_id`,
+      `SELECT order_id, total_amount, user_id, order_number, payment_status, payment_method
+       FROM Orders WHERE order_id = @order_id AND user_id = @user_id`,
       { order_id: { type: sql.Int, value: orderId }, user_id: { type: sql.Int, value: userId } }
     );
     const order = orderResult.recordset[0];
     if (!order) throw new ApiError(404, 'Order not found.');
 
+    // Replay guard — a settled order must not be re-verified.
+    if (order.payment_status === 'Paid') {
+      throw new ApiError(400, 'This order has already been paid.');
+    }
+    if (order.payment_status === 'Refunded') {
+      throw new ApiError(400, 'This order has been refunded and cannot be paid.');
+    }
+
     const gateway = getPaymentGateway();
     const verifyResult = await gateway.verifyPayment(paymentData);
+
+    // The gateway is authoritative for the amount. A verified payment whose
+    // value does not match the order total is never accepted as settlement —
+    // this is what stops a customer paying ₹1 against a ₹10,000 order.
+    if (verifyResult.success) {
+      const expected = Number(order.total_amount);
+      if (!Number.isFinite(verifyResult.amount) || Math.abs(verifyResult.amount - expected) > 0.01) {
+        logger.error(
+          `[Payments] Amount mismatch on order ${orderId}: expected ${expected}, ` +
+            `gateway reported ${verifyResult.amount}. Rejecting.`
+        );
+        await this.auditService.log({
+          userId,
+          action: 'payment_amount_mismatch',
+          module: 'payments',
+          recordId: orderId,
+          newValues: { expected, reported: verifyResult.amount },
+        });
+        throw new ApiError(400, 'Payment amount does not match the order total.');
+      }
+    } else {
+      logger.warn(`[Payments] Verification failed for order ${orderId} (user ${userId}).`);
+    }
 
     const newOrderStatus = verifyResult.success ? 'Confirmed' : 'Pending';
     const newPaymentStatus = verifyResult.success ? 'Paid' : 'Failed';
@@ -63,11 +96,18 @@ export class PaymentService {
     // Update order and transaction
     const { runInTransaction } = await import('../../database/db');
     await runInTransaction(async (transaction) => {
-      await transaction.request()
+      // Guarded update: the WHERE clause re-asserts the unpaid precondition
+      // inside the transaction, so two concurrent verifies cannot both settle.
+      const updated = await transaction.request()
         .input('order_id', sql.Int, orderId)
         .input('order_status', sql.VarChar(30), newOrderStatus)
         .input('payment_status', sql.VarChar(30), newPaymentStatus)
-        .query(`UPDATE Orders SET order_status = @order_status, payment_status = @payment_status, updated_at = GETDATE() WHERE order_id = @order_id`);
+        .query(`UPDATE Orders SET order_status = @order_status, payment_status = @payment_status, updated_at = GETDATE()
+                WHERE order_id = @order_id AND payment_status <> 'Paid'`);
+
+      if (!updated.rowsAffected[0]) {
+        throw new ApiError(409, 'This order was settled by a concurrent request.');
+      }
 
       await transaction.request()
         .input('order_id', sql.Int, orderId)

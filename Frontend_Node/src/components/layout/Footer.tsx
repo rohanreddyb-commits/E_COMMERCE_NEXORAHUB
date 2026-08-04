@@ -70,20 +70,20 @@ export const Footer: React.FC = () => {
           <div>
             <h5 className="font-bold tracking-widest uppercase mb-4 text-on-primary">COLLECTIONS</h5>
             <ul className="space-y-2.5 text-on-primary-container">
-              <li><Link href="/" className="hover:text-on-primary transition-colors">Core Heavyweights</Link></li>
-              <li><Link href="/" className="hover:text-on-primary transition-colors">Architectural Outerwear</Link></li>
-              <li><Link href="/" className="hover:text-on-primary transition-colors">Tactile Bottoms</Link></li>
-              <li><Link href="/" className="hover:text-on-primary transition-colors">Limited Capsules</Link></li>
+              <li><Link href="/products" className="hover:text-on-primary transition-colors">Shop All</Link></li>
+              <li><Link href="/products?featured=true" className="hover:text-on-primary transition-colors">Featured Drops</Link></li>
+              <li><Link href="/products?sort=created_at&order=DESC" className="hover:text-on-primary transition-colors">New Arrivals</Link></li>
+              <li><Link href="/products?onSale=true" className="hover:text-on-primary transition-colors">On Sale</Link></li>
             </ul>
           </div>
 
           <div>
             <h5 className="font-bold tracking-widest uppercase mb-4 text-on-primary">CUSTOMER CARE</h5>
             <ul className="space-y-2.5 text-on-primary-container">
-              <li><Link href="/cart" className="hover:text-on-primary transition-colors">Express Shipping</Link></li>
-              <li><Link href="/profile" className="hover:text-on-primary transition-colors">Returns & Exchanges</Link></li>
-              <li><Link href="/product/aesthete-essential-hoodie" className="hover:text-on-primary transition-colors">Garment Care Guide</Link></li>
-              <li><Link href="/profile" className="hover:text-on-primary transition-colors">Order Tracking</Link></li>
+              <li><Link href="/cart" className="hover:text-on-primary transition-colors">Shopping Bag</Link></li>
+              <li><Link href="/account/orders" className="hover:text-on-primary transition-colors">Returns & Exchanges</Link></li>
+              <li><Link href="/account/orders" className="hover:text-on-primary transition-colors">Order Tracking</Link></li>
+              <li><Link href="/account/wishlist" className="hover:text-on-primary transition-colors">My Wishlist</Link></li>
             </ul>
           </div>
 

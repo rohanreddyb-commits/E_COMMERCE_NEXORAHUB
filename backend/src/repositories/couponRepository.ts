@@ -7,6 +7,12 @@ export interface CouponDB {
   discount_type: "Percentage" | "Fixed";
   discount_value: number;
   min_order_amount: number;
+  /** Percentage-coupon cap. Must be applied wherever a discount is quoted. */
+  max_discount_amount: number | null;
+  /** Global redemption cap; null means unlimited. */
+  usage_limit: number | null;
+  used_count: number;
+  start_date: Date | null;
   expiry_date: Date;
   is_active: boolean;
   created_at: Date;
@@ -42,7 +48,8 @@ export class CouponRepository {
 
   static async getCouponByCode(code: string): Promise<CouponDB | null> {
     const query = `
-      SELECT coupon_id, code, discount_type, discount_value, min_order_amount, expiry_date, is_active, created_at, updated_at
+      SELECT coupon_id, code, discount_type, discount_value, min_order_amount, max_discount_amount,
+             usage_limit, used_count, start_date, expiry_date, is_active, created_at, updated_at
       FROM Coupons
       WHERE code = @code;
     `;
@@ -59,7 +66,8 @@ export class CouponRepository {
 
   static async getCouponById(couponId: number): Promise<CouponDB | null> {
     const query = `
-      SELECT coupon_id, code, discount_type, discount_value, min_order_amount, expiry_date, is_active, created_at, updated_at
+      SELECT coupon_id, code, discount_type, discount_value, min_order_amount, max_discount_amount,
+             usage_limit, used_count, start_date, expiry_date, is_active, created_at, updated_at
       FROM Coupons
       WHERE coupon_id = @couponId;
     `;
@@ -76,7 +84,8 @@ export class CouponRepository {
 
   static async getAllCoupons(): Promise<CouponDB[]> {
     const query = `
-      SELECT coupon_id, code, discount_type, discount_value, min_order_amount, expiry_date, is_active, created_at, updated_at
+      SELECT coupon_id, code, discount_type, discount_value, min_order_amount, max_discount_amount,
+             usage_limit, used_count, start_date, expiry_date, is_active, created_at, updated_at
       FROM Coupons
       ORDER BY coupon_id DESC;
     `;

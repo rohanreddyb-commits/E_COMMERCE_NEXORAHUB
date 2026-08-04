@@ -5,6 +5,67 @@ import { logger } from "../config/logger";
 let pool: sql.ConnectionPool | null = null;
 let isConnecting = false;
 
+/** Matches a plain SQL Server identifier — letters, digits, underscore. */
+const SAFE_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+/**
+ * Ensure the target database exists before the application pool ever tries
+ * to connect to it.
+ *
+ * mssql's ConnectionPool config pins `database: env.db.database` up front,
+ * so on a brand-new SQL Server instance — the exact case this project needs
+ * to support ("works on another computer") — that connection fails outright
+ * before a single query can run, including the `CREATE DATABASE` statement
+ * inside schema.sql. The fix is to connect to the server-level `master`
+ * database first, create the target database there if it is missing, then
+ * let the normal pool connect to it.
+ *
+ * env.db.database comes from server-side configuration (.env), not user
+ * input, but CREATE DATABASE cannot be parameterised, so the name is still
+ * validated against a safe-identifier pattern before being interpolated.
+ */
+const ensureDatabaseExists = async (): Promise<void> => {
+  const dbName = env.db.database;
+  if (!SAFE_IDENTIFIER.test(dbName)) {
+    throw new Error(
+      `Configuration Error: DB_DATABASE ("${dbName}") is not a valid SQL Server identifier.`
+    );
+  }
+
+  const masterConfig: sql.config = {
+    user: env.db.user,
+    password: env.db.password,
+    server: env.db.server,
+    database: "master",
+    port: env.db.port,
+    options: {
+      encrypt: env.db.options.encrypt,
+      trustServerCertificate: env.db.options.trustServerCertificate,
+      enableArithAbort: true,
+    },
+    connectionTimeout: 15000,
+  };
+
+  const masterPool = new sql.ConnectionPool(masterConfig);
+  try {
+    await masterPool.connect();
+    const exists = await masterPool
+      .request()
+      .input("dbName", sql.NVarChar, dbName)
+      .query("SELECT 1 AS found FROM sys.databases WHERE name = @dbName");
+
+    if (exists.recordset.length === 0) {
+      logger.info(`Database "${dbName}" does not exist — creating it.`);
+      // Identifier validated above; bracket-quoted to tolerate names with
+      // spaces/reserved words while still rejecting anything unsafe.
+      await masterPool.request().query(`CREATE DATABASE [${dbName}]`);
+      logger.info(`Database "${dbName}" created.`);
+    }
+  } finally {
+    await masterPool.close();
+  }
+};
+
 export const connectDatabase = async (retries = 5, delay = 5000): Promise<sql.ConnectionPool> => {
   if (pool && pool.connected) {
     return pool;
@@ -40,6 +101,11 @@ export const connectDatabase = async (retries = 5, delay = 5000): Promise<sql.Co
   for (let i = 0; i < retries; i++) {
     try {
       logger.info(`Attempting to connect to MSSQL Server (Attempt ${i + 1}/${retries})...`);
+
+      // Runs on every attempt (cheap no-op once the database exists) so a
+      // database dropped or missing mid-run is also recovered from.
+      await ensureDatabaseExists();
+
       pool = await new sql.ConnectionPool(config).connect();
       logger.info("Successfully connected to MSSQL Server connection pool.");
       isConnecting = false;

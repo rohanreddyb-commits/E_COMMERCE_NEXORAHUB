@@ -14,18 +14,25 @@ export class AnalyticsRepository {
     return result.recordset[0];
   }
 
+  /**
+   * Grouping expressions keyed by period.
+   *
+   * SQL Server cannot parameterise a GROUP BY expression, so this fragment is
+   * interpolated. It is therefore resolved through a fixed map and can only
+   * ever be one of these three literals — an unrecognised `period` falls back
+   * to 'daily' rather than reaching the query. Same allow-list pattern used
+   * for ORDER BY in the product and search services.
+   */
+  private static readonly SALES_DATE_GROUPING: Record<string, string> = {
+    daily: 'CONVERT(date, created_at)',
+    monthly: `FORMAT(created_at, 'yyyy-MM')`,
+    weekly: `DATEPART(year, created_at) * 100 + DATEPART(iso_week, created_at)`,
+  };
+
   async getSalesData(period: 'daily' | 'weekly' | 'monthly'): Promise<any[]> {
-    let dateFormat = '';
-    
-    // Simplistic date grouping for SQL Server
-    if (period === 'daily') {
-      dateFormat = 'CONVERT(date, created_at)';
-    } else if (period === 'monthly') {
-      dateFormat = `FORMAT(created_at, 'yyyy-MM')`;
-    } else {
-      // Weekly (Year-Week)
-      dateFormat = `DATEPART(year, created_at) * 100 + DATEPART(iso_week, created_at)`;
-    }
+    const dateFormat =
+      AnalyticsRepository.SALES_DATE_GROUPING[period] ??
+      AnalyticsRepository.SALES_DATE_GROUPING.daily;
 
     const query = `
       SELECT 

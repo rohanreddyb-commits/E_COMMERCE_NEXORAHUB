@@ -1,233 +1,141 @@
--- Sample Demonstration Data for E-Commerce Admin Panel (NexoraHub_DB)
--- Target Database: Microsoft SQL Server (MSSQL)
+-- =======================================================================================
+-- NexoraHub — Optional Demo Data (customers, addresses, orders, reviews)
+--
+-- NOT run automatically. This file is never referenced by
+-- backend/src/database/initDb.ts — run it by hand only if you want a few
+-- fake customers and orders for screenshots / admin-dashboard demos:
+--
+--     sqlcmd -S localhost -d NexoraHub_DB -i database/sample_data.sql
+--
+-- Safety contract (this matters — the previous version of this file did not
+-- honour it):
+--   - Every insert is idempotent, keyed by email/order_number, so re-running
+--     this file is a no-op instead of a duplicate-data error.
+--   - This file NEVER deletes anything. The old version started with
+--     `DELETE FROM Users WHERE user_id <> 1` and similar statements, which
+--     assumed a hardcoded admin at user_id=1 (no longer seeded) and would
+--     wipe out real product, order and customer data on a machine that
+--     already had any. That is exactly the "affects another computer"
+--     failure mode — removed entirely.
+--   - It only touches the three demo customers it creates (by email) and
+--     their own orders/reviews. Every other row in the database — your real
+--     catalog, your bootstrapped admin, any other customer — is untouched.
+--
+-- Demo login (all three): password `DemoPassword123`
+-- =======================================================================================
+
 USE NexoraHub_DB;
 GO
 
--- Disable constraint check to clean database safely
-EXEC sp_MSforeachtable "ALTER TABLE ? NOCHECK CONSTRAINT ALL"
+-- --- Demo customers ---------------------------------------------------------------------
+IF NOT EXISTS (SELECT 1 FROM Users WHERE email = 'john.doe@example.test')
+BEGIN
+    INSERT INTO Users (first_name, last_name, email, password_hash, phone, status, is_email_verified, created_at, updated_at)
+    VALUES (N'John', N'Doe', N'john.doe@example.test',
+            '$2b$12$Cf6ntfQFstAO4ps6TD/2bOfcDnDdL1AO5QELYylG0Dm2ftkqg4bbS',
+            '206-555-0192', 'Active', 1, DATEADD(day, -30, GETDATE()), GETDATE());
 
-DELETE FROM AuditLogs;
-DELETE FROM Reviews;
-DELETE FROM Transactions;
-DELETE FROM OrderItems;
-DELETE FROM Orders;
-DELETE FROM InventoryHistory;
-DELETE FROM Inventory;
-DELETE FROM Products;
-DELETE FROM Categories;
-DELETE FROM Brands;
-DELETE FROM Addresses;
-DELETE FROM UserRoles WHERE user_id <> 1; -- Keep Admin User
-DELETE FROM Users WHERE user_id <> 1; -- Keep Admin User
-DELETE FROM Coupons;
+    INSERT INTO UserRoles (user_id, role_id)
+    SELECT u.user_id, r.role_id FROM Users u, Roles r
+    WHERE u.email = 'john.doe@example.test' AND r.name = 'Customer';
+END;
 
--- Enable constraints again
-EXEC sp_MSforeachtable "ALTER TABLE ? WITH CHECK CHECK CONSTRAINT ALL"
+IF NOT EXISTS (SELECT 1 FROM Users WHERE email = 'jane.smith@example.test')
+BEGIN
+    INSERT INTO Users (first_name, last_name, email, password_hash, phone, status, is_email_verified, created_at, updated_at)
+    VALUES (N'Jane', N'Smith', N'jane.smith@example.test',
+            '$2b$12$Cf6ntfQFstAO4ps6TD/2bOfcDnDdL1AO5QELYylG0Dm2ftkqg4bbS',
+            '512-555-0122', 'Active', 1, DATEADD(day, -20, GETDATE()), GETDATE());
+
+    INSERT INTO UserRoles (user_id, role_id)
+    SELECT u.user_id, r.role_id FROM Users u, Roles r
+    WHERE u.email = 'jane.smith@example.test' AND r.name = 'Customer';
+END;
+
+IF NOT EXISTS (SELECT 1 FROM Users WHERE email = 'alice.johnson@example.test')
+BEGIN
+    INSERT INTO Users (first_name, last_name, email, password_hash, phone, status, is_email_verified, created_at, updated_at)
+    VALUES (N'Alice', N'Johnson', N'alice.johnson@example.test',
+            '$2b$12$Cf6ntfQFstAO4ps6TD/2bOfcDnDdL1AO5QELYylG0Dm2ftkqg4bbS',
+            '312-555-0188', 'Active', 1, DATEADD(day, -10, GETDATE()), GETDATE());
+
+    INSERT INTO UserRoles (user_id, role_id)
+    SELECT u.user_id, r.role_id FROM Users u, Roles r
+    WHERE u.email = 'alice.johnson@example.test' AND r.name = 'Customer';
+END;
 GO
 
--- 1. Seed Customer Users
-PRINT 'Seeding Users...';
-SET IDENTITY_INSERT Users ON;
-
--- Customer John Doe (user_id = 2)
-INSERT INTO Users (user_id, first_name, last_name, email, password_hash, phone, status, created_at, updated_at)
-VALUES (2, N'John', N'Doe', N'john.doe@gmail.com', '$2b$12$kbEOauaOuYs1ADffV3zMSOcZsFDkfpCiIEf5SrsIV9JzUB9XrBPRi', '206-555-0192', 'Active', DATEADD(day, -30, GETDATE()), GETDATE());
-
--- Customer Jane Smith (user_id = 3)
-INSERT INTO Users (user_id, first_name, last_name, email, password_hash, phone, status, created_at, updated_at)
-VALUES (3, N'Jane', N'Smith', N'jane.smith@yahoo.com', '$2b$12$kbEOauaOuYs1ADffV3zMSOcZsFDkfpCiIEf5SrsIV9JzUB9XrBPRi', '512-555-0122', 'Active', DATEADD(day, -20, GETDATE()), GETDATE());
-
--- Customer Alice Johnson (user_id = 4)
-INSERT INTO Users (user_id, first_name, last_name, email, password_hash, phone, status, created_at, updated_at)
-VALUES (4, N'Alice', N'Johnson', N'alice.j@outlook.com', '$2b$12$kbEOauaOuYs1ADffV3zMSOcZsFDkfpCiIEf5SrsIV9JzUB9XrBPRi', '312-555-0188', 'Active', DATEADD(day, -10, GETDATE()), GETDATE());
-
-SET IDENTITY_INSERT Users OFF;
-
--- Map to Customer Role (role_id = 3)
-INSERT INTO UserRoles (user_id, role_id) VALUES (2, 3);
-INSERT INTO UserRoles (user_id, role_id) VALUES (3, 3);
-INSERT INTO UserRoles (user_id, role_id) VALUES (4, 3);
+-- --- Demo addresses (one shipping address per demo customer) ---------------------------
+INSERT INTO Addresses (user_id, type, title, first_name, last_name, phone, street, city, state, postal_code, country, is_default)
+SELECT u.user_id, 'Shipping', N'Home', u.first_name, u.last_name, u.phone, v.street, v.city, v.state, v.postal_code, N'USA', 1
+FROM Users u
+INNER JOIN (VALUES
+    ('john.doe@example.test',    N'123 Main St',  N'Seattle', N'WA', '98101'),
+    ('jane.smith@example.test',  N'789 Oak Ave',  N'Austin',  N'TX', '78701'),
+    ('alice.johnson@example.test', N'456 Elm Rd', N'Chicago', N'IL', '60601')
+) AS v(email, street, city, state, postal_code) ON u.email = v.email
+WHERE NOT EXISTS (SELECT 1 FROM Addresses a WHERE a.user_id = u.user_id);
 GO
 
--- 2. Seed Addresses
-PRINT 'Seeding Addresses...';
-SET IDENTITY_INSERT Addresses ON;
+-- --- Demo orders (only created if the demo customer has none yet) ---------------------
+IF NOT EXISTS (SELECT 1 FROM Orders WHERE order_number = 'DEMO-ORD-0001')
+INSERT INTO Orders (order_number, user_id, shipping_address_id, subtotal, shipping_fee, tax_amount, discount_amount, total_amount, coupon_id, order_status, payment_status, payment_method, created_at, updated_at)
+SELECT 'DEMO-ORD-0001', u.user_id, a.address_id, 1548.99, 0.00, 0.00, 50.00, 1498.99, co.coupon_id, 'Shipped', 'Paid', 'Credit Card', DATEADD(day, -7, GETDATE()), GETDATE()
+FROM Users u
+JOIN Addresses a ON a.user_id = u.user_id
+LEFT JOIN Coupons co ON co.code = 'SUMMER50'
+WHERE u.email = 'john.doe@example.test';
 
-INSERT INTO Addresses (address_id, user_id, type, title, first_name, last_name, phone, street, city, state, postal_code, country, is_default, created_at, updated_at)
-VALUES (1, 2, 'Shipping', N'Home', N'John', N'Doe', '206-555-0192', N'123 Main St', N'Seattle', N'WA', '98101', N'USA', 1, GETDATE(), GETDATE());
+IF NOT EXISTS (SELECT 1 FROM Orders WHERE order_number = 'DEMO-ORD-0002')
+INSERT INTO Orders (order_number, user_id, shipping_address_id, subtotal, shipping_fee, tax_amount, discount_amount, total_amount, coupon_id, order_status, payment_status, payment_method, created_at, updated_at)
+SELECT 'DEMO-ORD-0002', u.user_id, a.address_id, 89.99, 0.00, 0.00, 9.00, 80.99, co.coupon_id, 'Delivered', 'Paid', 'PayPal', DATEADD(day, -5, GETDATE()), GETDATE()
+FROM Users u
+JOIN Addresses a ON a.user_id = u.user_id
+LEFT JOIN Coupons co ON co.code = 'WELCOME10'
+WHERE u.email = 'jane.smith@example.test';
 
-INSERT INTO Addresses (address_id, user_id, type, title, first_name, last_name, phone, street, city, state, postal_code, country, is_default, created_at, updated_at)
-VALUES (2, 2, 'Billing', N'Office', N'John', N'Doe', '206-555-0143', N'500 Pine St', N'Seattle', N'WA', '98101', N'USA', 0, GETDATE(), GETDATE());
-
-INSERT INTO Addresses (address_id, user_id, type, title, first_name, last_name, phone, street, city, state, postal_code, country, is_default, created_at, updated_at)
-VALUES (3, 3, 'Shipping', N'Primary', N'Jane', N'Smith', '512-555-0122', N'789 Oak Ave', N'Austin', N'TX', '78701', N'USA', 1, GETDATE(), GETDATE());
-
-INSERT INTO Addresses (address_id, user_id, type, title, first_name, last_name, phone, street, city, state, postal_code, country, is_default, created_at, updated_at)
-VALUES (4, 4, 'Shipping', N'Home', N'Alice', N'Johnson', '312-555-0188', N'456 Elm Rd', N'Chicago', N'IL', '60601', N'USA', 1, GETDATE(), GETDATE());
-
-SET IDENTITY_INSERT Addresses OFF;
+IF NOT EXISTS (SELECT 1 FROM Orders WHERE order_number = 'DEMO-ORD-0003')
+INSERT INTO Orders (order_number, user_id, shipping_address_id, subtotal, shipping_fee, tax_amount, discount_amount, total_amount, coupon_id, order_status, payment_status, payment_method, created_at, updated_at)
+SELECT 'DEMO-ORD-0003', u.user_id, a.address_id, 1199.00, 0.00, 0.00, 0.00, 1199.00, NULL, 'Pending', 'Pending', 'Credit Card', DATEADD(day, -2, GETDATE()), GETDATE()
+FROM Users u
+JOIN Addresses a ON a.user_id = u.user_id
+WHERE u.email = 'alice.johnson@example.test';
 GO
 
--- 3. Seed Brands
-PRINT 'Seeding Brands...';
-SET IDENTITY_INSERT Brands ON;
-
-INSERT INTO Brands (brand_id, name, slug, description, status, is_featured, created_at, updated_at)
-VALUES (1, N'Apple', 'apple', N'Consumer electronics, smart phones, and computing devices.', 'Active', 1, GETDATE(), GETDATE());
-
-INSERT INTO Brands (brand_id, name, slug, description, status, is_featured, created_at, updated_at)
-VALUES (2, N'Dell', 'dell', N'Premium computer workstations, screens, and laptops.', 'Active', 0, GETDATE(), GETDATE());
-
-INSERT INTO Brands (brand_id, name, slug, description, status, is_featured, created_at, updated_at)
-VALUES (3, N'Sony', 'sony', N'Pioneers of high fidelity audio devices and displays.', 'Active', 1, GETDATE(), GETDATE());
-
-INSERT INTO Brands (brand_id, name, slug, description, status, is_featured, created_at, updated_at)
-VALUES (4, N'Nike', 'nike', N'Athletic footwear, activewear, and gear.', 'Active', 1, GETDATE(), GETDATE());
-
-SET IDENTITY_INSERT Brands OFF;
+-- --- Demo order items --------------------------------------------------------------------
+INSERT INTO OrderItems (order_id, product_id, product_name, sku, quantity, unit_price, total_price)
+SELECT o.order_id, p.product_id, p.name, p.sku, v.quantity, p.price, p.price * v.quantity
+FROM Orders o
+INNER JOIN (VALUES
+    ('DEMO-ORD-0001', 'SKU-AAPL-IPH15PM', 1),
+    ('DEMO-ORD-0001', 'SKU-SONY-WH1000XM5', 1),
+    ('DEMO-ORD-0002', 'SKU-NIKE-RUNAIR', 1),
+    ('DEMO-ORD-0003', 'SKU-AAPL-IPH15PM', 1)
+) AS v(order_number, sku, quantity) ON o.order_number = v.order_number
+INNER JOIN Products p ON p.sku = v.sku
+WHERE NOT EXISTS (SELECT 1 FROM OrderItems oi WHERE oi.order_id = o.order_id AND oi.product_id = p.product_id);
 GO
 
--- 4. Seed Categories
-PRINT 'Seeding Categories...';
-SET IDENTITY_INSERT Categories ON;
-
-INSERT INTO Categories (category_id, name, slug, description, status, created_at, updated_at)
-VALUES (1, N'Electronics', 'electronics', N'Smartphones, laptops, accessories, and gadgets.', 'Active', GETDATE(), GETDATE());
-
-INSERT INTO Categories (category_id, name, slug, description, status, created_at, updated_at)
-VALUES (2, N'Fashion & Apparel', 'fashion', N'Premium clothing, jackets, activewear, and shoes.', 'Active', GETDATE(), GETDATE());
-
-INSERT INTO Categories (category_id, name, slug, description, status, created_at, updated_at)
-VALUES (3, N'Home & Kitchen', 'home-kitchen', N'Appliances, makers, blenders, and interior decorations.', 'Active', GETDATE(), GETDATE());
-
-INSERT INTO Categories (category_id, name, slug, description, status, created_at, updated_at)
-VALUES (4, N'Books & Learning', 'books', N'Technical study materials, textbooks, novels, and guides.', 'Active', GETDATE(), GETDATE());
-
-SET IDENTITY_INSERT Categories OFF;
-GO
-
--- 5. Seed Products
-PRINT 'Seeding Products...';
-SET IDENTITY_INSERT Products ON;
-
-INSERT INTO Products (product_id, name, slug, description, brand_id, category_id, price, sku, status, is_featured, created_at, updated_at)
-VALUES (1, N'iPhone 15 Pro Max', 'iphone-15-pro-max', N'Apple iPhone with Titanium finish, A17 Pro Chip, and advanced telephoto camera system.', 1, 1, 1199.00, 'SKU-AAPL-IPH15PM', 'Active', 1, GETDATE(), GETDATE());
-
-INSERT INTO Products (product_id, name, slug, description, brand_id, category_id, price, sku, status, is_featured, created_at, updated_at)
-VALUES (2, N'Dell XPS 15 Laptop', 'dell-xps-15-laptop', N'15-inch high-performance developer laptop with InfinityEdge display and Intel Core i9 processor.', 2, 1, 1899.99, 'SKU-DELL-XPS15D', 'Active', 0, GETDATE(), GETDATE());
-
-INSERT INTO Products (product_id, name, slug, description, brand_id, category_id, price, sku, status, is_featured, created_at, updated_at)
-VALUES (3, N'Sony Noise-Cancelling Headphones', 'sony-noise-cancelling-headphones', N'Over-ear Bluetooth headphones with market-leading active noise cancellation (WH-1000XM5).', 3, 1, 349.99, 'SKU-SONY-WH1000XM5', 'Active', 1, GETDATE(), GETDATE());
-
-INSERT INTO Products (product_id, name, slug, description, brand_id, category_id, price, sku, status, is_featured, created_at, updated_at)
-VALUES (4, N'Classic Brown Leather Jacket', 'classic-brown-leather-jacket', N'Crafted from 100% genuine lambskin leather. Stylish modern slim-fit cut.', NULL, 2, 149.50, 'SKU-FSHN-LTHJKT', 'Active', 0, GETDATE(), GETDATE());
-
-INSERT INTO Products (product_id, name, slug, description, brand_id, category_id, price, sku, status, is_featured, created_at, updated_at)
-VALUES (5, N'Nike Air Running Shoes', 'nike-air-running-shoes', N'Breathable, lightweight mesh construction with responsive foam insoles for premium comfort.', 4, 2, 89.99, 'SKU-NIKE-RUNAIR', 'Active', 1, GETDATE(), GETDATE());
-
-INSERT INTO Products (product_id, name, slug, description, brand_id, category_id, price, sku, status, is_featured, created_at, updated_at)
-VALUES (6, N'Professional Kitchen Blender', 'professional-kitchen-blender', N'Countertop blender with 1200W motor, multi-speed dials, and 64oz BPA-free blending container.', NULL, 3, 99.00, 'SKU-HOME-KTBLNDR', 'Active', 0, GETDATE(), GETDATE());
-
-SET IDENTITY_INSERT Products OFF;
-GO
-
--- 6. Seed Inventory
-PRINT 'Seeding Inventory...';
-INSERT INTO Inventory (product_id, quantity, reserved_quantity, low_stock_threshold, status, updated_at)
-VALUES (1, 50, 2, 10, 'In Stock', GETDATE());
-
-INSERT INTO Inventory (product_id, quantity, reserved_quantity, low_stock_threshold, status, updated_at)
-VALUES (2, 8, 1, 5, 'Low Stock', GETDATE());
-
-INSERT INTO Inventory (product_id, quantity, reserved_quantity, low_stock_threshold, status, updated_at)
-VALUES (3, 75, 0, 10, 'In Stock', GETDATE());
-
-INSERT INTO Inventory (product_id, quantity, reserved_quantity, low_stock_threshold, status, updated_at)
-VALUES (4, 45, 0, 10, 'In Stock', GETDATE());
-
-INSERT INTO Inventory (product_id, quantity, reserved_quantity, low_stock_threshold, status, updated_at)
-VALUES (5, 0, 0, 10, 'Out of Stock', GETDATE());
-
-INSERT INTO Inventory (product_id, quantity, reserved_quantity, low_stock_threshold, status, updated_at)
-VALUES (6, 35, 5, 8, 'In Stock', GETDATE());
-GO
-
--- 7. Seed Coupons
-PRINT 'Seeding Coupons...';
-SET IDENTITY_INSERT Coupons ON;
-
-INSERT INTO Coupons (coupon_id, code, description, discount_type, discount_value, min_order_amount, expiry_date, is_active, created_at, updated_at)
-VALUES (1, 'WELCOME10', N'10% off for new signups', 'Percentage', 10.00, 0.00, DATEADD(year, 2, GETDATE()), 1, GETDATE(), GETDATE());
-
-INSERT INTO Coupons (coupon_id, code, description, discount_type, discount_value, min_order_amount, expiry_date, is_active, created_at, updated_at)
-VALUES (2, 'SUMMER50', N'$50 off on purchases above $150', 'Fixed', 50.00, 150.00, DATEADD(year, 2, GETDATE()), 1, GETDATE(), GETDATE());
-
-INSERT INTO Coupons (coupon_id, code, description, discount_type, discount_value, min_order_amount, expiry_date, is_active, created_at, updated_at)
-VALUES (3, 'EXPIRED20', N'Expired promotion code', 'Percentage', 20.00, 0.00, DATEADD(day, -5, GETDATE()), 0, GETDATE(), GETDATE());
-
-SET IDENTITY_INSERT Coupons OFF;
-GO
-
--- 8. Seed Orders, OrderItems & Transactions
-PRINT 'Seeding Orders...';
-SET IDENTITY_INSERT Orders ON;
-
--- Order 1: John Doe - Shipped (Total: $1498.99, Discount: $50.00 via SUMMER50)
-INSERT INTO Orders (order_id, order_number, user_id, shipping_address_id, billing_address_id, subtotal, shipping_fee, tax_amount, discount_amount, total_amount, coupon_id, order_status, payment_status, payment_method, created_at, updated_at)
-VALUES (1, 'ORD-2026-0001', 2, 1, 2, 1548.99, 0.00, 0.00, 50.00, 1498.99, 2, 'Shipped', 'Paid', 'Credit Card', DATEADD(day, -7, GETDATE()), GETDATE());
-
--- Order 2: Jane Smith - Delivered (Total: $80.99, Discount: $9.00 via WELCOME10)
-INSERT INTO Orders (order_id, order_number, user_id, shipping_address_id, billing_address_id, subtotal, shipping_fee, tax_amount, discount_amount, total_amount, coupon_id, order_status, payment_status, payment_method, created_at, updated_at)
-VALUES (2, 'ORD-2026-0002', 3, 3, 3, 89.99, 0.00, 0.00, 9.00, 80.99, 1, 'Delivered', 'Paid', 'PayPal', DATEADD(day, -5, GETDATE()), GETDATE());
-
--- Order 3: Alice Johnson - Pending (Total: $1199.00, No Discount)
-INSERT INTO Orders (order_id, order_number, user_id, shipping_address_id, billing_address_id, subtotal, shipping_fee, tax_amount, discount_amount, total_amount, coupon_id, order_status, payment_status, payment_method, created_at, updated_at)
-VALUES (3, 'ORD-2026-0003', 4, 4, 4, 1199.00, 0.00, 0.00, 0.00, 1199.00, NULL, 'Pending', 'Pending', 'Credit Card', DATEADD(day, -2, GETDATE()), GETDATE());
-
-SET IDENTITY_INSERT Orders OFF;
-GO
-
--- Seed OrderItems
-PRINT 'Seeding OrderItems...';
-SET IDENTITY_INSERT OrderItems ON;
-
--- Order 1 Items (iPhone + Sony Headphones)
-INSERT INTO OrderItems (order_item_id, order_id, product_id, product_name, sku, quantity, unit_price, total_price)
-VALUES (1, 1, 1, N'iPhone 15 Pro Max', 'SKU-AAPL-IPH15PM', 1, 1199.00, 1199.00);
-
-INSERT INTO OrderItems (order_item_id, order_id, product_id, product_name, sku, quantity, unit_price, total_price)
-VALUES (2, 1, 3, N'Sony Noise-Cancelling Headphones', 'SKU-SONY-WH1000XM5', 1, 349.99, 349.99);
-
--- Order 2 Items (Nike Running Shoes)
-INSERT INTO OrderItems (order_item_id, order_id, product_id, product_name, sku, quantity, unit_price, total_price)
-VALUES (3, 2, 5, N'Nike Air Running Shoes', 'SKU-NIKE-RUNAIR', 1, 89.99, 89.99);
-
--- Order 3 Items (iPhone)
-INSERT INTO OrderItems (order_item_id, order_id, product_id, product_name, sku, quantity, unit_price, total_price)
-VALUES (4, 3, 1, N'iPhone 15 Pro Max', 'SKU-AAPL-IPH15PM', 1, 1199.00, 1199.00);
-
-SET IDENTITY_INSERT OrderItems OFF;
-GO
-
--- Seed Payments/Transactions
-PRINT 'Seeding Transactions...';
+-- --- Demo transactions --------------------------------------------------------------------
 INSERT INTO Transactions (order_id, gateway_transaction_id, amount, payment_method, status, created_at)
-VALUES (1, 'TXN_SIM_SAMPLE_001_A', 1498.99, 'Credit Card', 'Success', DATEADD(day, -7, GETDATE()));
-
-INSERT INTO Transactions (order_id, gateway_transaction_id, amount, payment_method, status, created_at)
-VALUES (2, 'TXN_SIM_SAMPLE_002_B', 80.99, 'PayPal', 'Success', DATEADD(day, -5, GETDATE()));
+SELECT o.order_id, v.txn_id, o.total_amount, o.payment_method, 'Success', o.created_at
+FROM Orders o
+INNER JOIN (VALUES ('DEMO-ORD-0001', 'TXN_DEMO_0001'), ('DEMO-ORD-0002', 'TXN_DEMO_0002')) AS v(order_number, txn_id)
+    ON o.order_number = v.order_number
+WHERE NOT EXISTS (SELECT 1 FROM Transactions t WHERE t.order_id = o.order_id);
 GO
 
--- 9. Seed Reviews
-PRINT 'Seeding Reviews...';
-INSERT INTO Reviews (product_id, user_id, rating, title, comment, status, created_at, updated_at)
-VALUES (1, 2, 5, N'Best iPhone yet!', N'Super premium feel with the titanium finish. The camera system is insane.', 'Approved', DATEADD(day, -6, GETDATE()), GETDATE());
-
-INSERT INTO Reviews (product_id, user_id, rating, title, comment, status, created_at, updated_at)
-VALUES (3, 3, 4, N'Incredible ANC quality', N'ANC is top notch. Sound signature is slightly bass heavy but easily fixable in EQ.', 'Approved', DATEADD(day, -4, GETDATE()), GETDATE());
-
-INSERT INTO Reviews (product_id, user_id, rating, title, comment, status, created_at, updated_at)
-VALUES (1, 3, 1, N'Screen cracked on day 1', N'Slipped from my pocket onto a carpeted floor and cracked. Glass quality is subpar.', 'Pending', DATEADD(day, -1, GETDATE()), GETDATE());
+-- --- Demo reviews ---------------------------------------------------------------------
+INSERT INTO Reviews (product_id, user_id, rating, title, comment, body, status, is_verified_purchase, created_at, updated_at)
+SELECT p.product_id, u.user_id, v.rating, v.title, v.body, v.body, v.status, 1, DATEADD(day, -4, GETDATE()), GETDATE()
+FROM (VALUES
+    ('SKU-AAPL-IPH15PM',   'john.doe@example.test',    5, N'Best iPhone yet!',        N'Super premium feel with the titanium finish. The camera system is insane.', 'Approved'),
+    ('SKU-SONY-WH1000XM5', 'jane.smith@example.test',  4, N'Incredible ANC quality',  N'ANC is top notch. Sound signature is slightly bass heavy but easily fixable in EQ.', 'Approved')
+) AS v(sku, email, rating, title, body, status)
+JOIN Products p ON p.sku = v.sku
+JOIN Users u ON u.email = v.email
+WHERE NOT EXISTS (SELECT 1 FROM Reviews r WHERE r.product_id = p.product_id AND r.user_id = u.user_id);
 GO
 
-PRINT 'Sample database seeding complete!';
+PRINT 'Demo data ready. Sign in with any of the three demo emails above and password DemoPassword123.';
+GO

@@ -3,6 +3,7 @@ import { CustomerReviewController } from './customer.review.controller';
 import { optionalAuthCustomer, authenticateCustomer } from '../../common/middleware/customer.auth.middleware';
 import { body, param } from 'express-validator';
 import { validateRequest } from '../../common/middleware/validate.middleware';
+import { contentWriteRateLimiter } from '../../common/middleware/rateLimiter.middleware';
 
 const router = Router();
 const controller = new CustomerReviewController();
@@ -19,8 +20,8 @@ router.get('/me', authenticateCustomer, controller.getMyReviews);
 // Product reviews (public)
 router.get('/product/:productId', [param('productId').isInt({ min: 1 })], validateRequest, controller.getProductReviews);
 
-// Create review for a product (protected)
-router.post('/product/:productId', authenticateCustomer, [param('productId').isInt({ min: 1 }), ...reviewValidation], validateRequest, controller.createReview);
+// Create review for a product (protected, rate-limited against spam)
+router.post('/product/:productId', authenticateCustomer, contentWriteRateLimiter, [param('productId').isInt({ min: 1 }), ...reviewValidation], validateRequest, controller.createReview);
 
 // Update / delete own review
 router.patch('/:id', authenticateCustomer, [param('id').isInt({ min: 1 })], validateRequest, controller.updateReview);

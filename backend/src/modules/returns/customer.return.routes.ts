@@ -3,13 +3,14 @@ import { CustomerReturnController } from './customer.return.controller';
 import { authenticateCustomer } from '../../common/middleware/customer.auth.middleware';
 import { body, param } from 'express-validator';
 import { validateRequest } from '../../common/middleware/validate.middleware';
+import { contentWriteRateLimiter } from '../../common/middleware/rateLimiter.middleware';
 
 const router = Router();
 const controller = new CustomerReturnController();
 
 router.use(authenticateCustomer);
 
-router.post('/', [
+router.post('/', contentWriteRateLimiter, [
   body('orderId').isInt({ min: 1 }).withMessage('Valid order ID is required.'),
   body('orderItemId').isInt({ min: 1 }).withMessage('Valid order item ID is required.'),
   body('reason').trim().notEmpty().withMessage('Reason is required.').isLength({ max: 200 }),

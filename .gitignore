@@ -1,6 +1,21 @@
 node_modules/
 dist/
 .next/
-.env
-*.log
 free-react-tailwind-admin-dashboard-main.zip
+
+# Secrets — never commit. Use .env.example as the template.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Logs. The backend writes error/combined/security logs here; they contain
+# request metadata and must not be committed.
+*.log
+logs/
+backend/logs/
+
+# Uploaded user content
+backend/uploads/*
+!backend/uploads/.gitkeep
