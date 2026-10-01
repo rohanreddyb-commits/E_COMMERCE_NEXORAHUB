@@ -26,7 +26,8 @@
       "Bash(node -e \"const p=require\\('./Frontend_Node/package.json'\\);console.log\\(Object.entries\\(p.dependencies\\).map\\(\\([k,v]\\)=>k+'@'+v\\).join\\('\\\\n'\\)\\)\")",
       "Bash(node -e \"const p=require\\('./Frontend/package.json'\\);console.log\\(Object.entries\\(p.dependencies\\).map\\(\\([k,v]\\)=>k+'@'+v\\).join\\('\\\\n'\\)\\)\")",
       "Bash(cd c:/E_Commerce_website/backend/src && find modules core routes middlewares middleware controllers -maxdepth 1 -type d 2>/dev/null | sort *)",
-      "Read(//c/src/core/routes/**)"
+      "Read(//c/src/core/routes/**)",
+      "Bash(BOOTSTRAP_ADMIN_EMAIL=\"admin@nexorahub.local\" BOOTSTRAP_ADMIN_PASSWORD=\"AdminPass123456\" npm run bootstrap:admin)"
     ]
   }
 }
