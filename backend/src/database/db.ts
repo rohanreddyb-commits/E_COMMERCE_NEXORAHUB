@@ -43,7 +43,7 @@ const ensureDatabaseExists = async (): Promise<void> => {
       trustServerCertificate: env.db.options.trustServerCertificate,
       enableArithAbort: true,
     },
-    connectionTimeout: 15000,
+    connectionTimeout: 10000,
   };
 
   const masterPool = new sql.ConnectionPool(masterConfig);
@@ -56,13 +56,19 @@ const ensureDatabaseExists = async (): Promise<void> => {
 
     if (exists.recordset.length === 0) {
       logger.info(`Database "${dbName}" does not exist — creating it.`);
-      // Identifier validated above; bracket-quoted to tolerate names with
-      // spaces/reserved words while still rejecting anything unsafe.
       await masterPool.request().query(`CREATE DATABASE [${dbName}]`);
       logger.info(`Database "${dbName}" created.`);
     }
+  } catch (err: any) {
+    // Azure SQL Database or constrained database users may restrict connecting to master.
+    // Log a warning and proceed directly to connecting to the target database.
+    logger.warn(`Could not verify database presence via master pool (${err.message}) — proceeding to target database connection.`);
   } finally {
-    await masterPool.close();
+    try {
+      await masterPool.close();
+    } catch {
+      // Ignore pool close errors on master
+    }
   }
 };
 
